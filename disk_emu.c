@@ -31,7 +31,7 @@ int init_fresh_disk(char *filename, int block_size, int num_blocks)
     int i, j;
     
     /*Set up latency at 0.02 second*/
-    L = 00000.f;
+    L = 00000.f; 
     /*Set up failure at 10%*/
     p = -1.f;
     /*Set up max retry attempts after failure to 3*/
@@ -142,6 +142,7 @@ int read_blocks(int start_address, int nblocks, void *buffer)
 /*------------------------------------------------------------------*/
 int write_blocks(int start_address, int nblocks, void *buffer)
 {
+    // start address is the block number 
     int i, e, s;
     e = 0;
     s = 0;

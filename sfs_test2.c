@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "sfs_api.h"
 
 /* The maximum file name length. We assume that filenames can contain
