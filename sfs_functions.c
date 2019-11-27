@@ -17,13 +17,22 @@ int super_init(SuperBlock * super) {
     return 0;
 }
 
-int root_INode_init(INode * root) {
+int root_INode_init(INode * root, int start, int size) {
     root->mode = 660;
     // root->pointers[0] = 0;
     root->num_links = 1;
     root->user_id = getuid();
     root->group_id = getgid();
     root->size = sizeof(root_directory);
+    for (int i = 0; i < siz; i++) {                  // setting the pointers to the blocks occupied by the root directory.
+        // block_pointer block;                         //Assuming that the number of blocks used is less than 12. 
+        // block.ind = root_block + i;
+        // if (i == 0) {block.prev = EOF;}
+        // else {block.prev = root_block + i - 1;}
+        // if (i == siz-1) {block.next = EOF;}
+        // else {block.next = root_block + i + 1;}
+        system_table.System_INodes[0].pointers[i] = strt + i;
+    }
     return 0;
 }
 
