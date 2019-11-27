@@ -36,9 +36,9 @@ typedef struct block_pointer {
 typedef struct INode { // Size = 80 bytes
     unsigned short mode;
     short num_links;
-    uid_t user_id;
-    uid_t group_id;
-    off_t size;
+    // uid_t user_id;
+    // uid_t group_id;
+    int size;
     int pointers[30];
     int indirect;
     bool valid;
