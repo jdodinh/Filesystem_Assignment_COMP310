@@ -100,9 +100,11 @@ int sfs_fopen(char *name) {         // opens the given file
         file_descriptor fd;
         init_fd(&fd, new_inode_index, 0, 0);
         
-        fds.fds[new_dentry_index] = fd;
+        fds.fds[new_fd_index] = fd;
 
         update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
+
+        return new_fd_index;
     }
 
     else {
@@ -112,6 +114,7 @@ int sfs_fopen(char *name) {         // opens the given file
         init_fd(&new_fd, inode, 0, file_node.size);
         int new_fd_index = next_free_fd(&fds);
         fds.fds[new_fd_index] = new_fd;
+        return new_fd_index;
     }
 
     return 0;
