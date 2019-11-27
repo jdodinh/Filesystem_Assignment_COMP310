@@ -1,3 +1,7 @@
+#ifndef HEADER_STRUCTURES
+#define HEADER_STRUCTURES
+
+
 #define NUM_BLOCKS  1000
 #define BLOCK_SIZE 1024
 #include <stdbool.h>
@@ -61,3 +65,6 @@ typedef struct file_descriptor {
 typedef struct fd_table{
     file_descriptor fds[NUM_BLOCKS];
 } fd_table;
+
+
+#endif

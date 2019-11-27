@@ -1,3 +1,7 @@
+#ifndef HEADER_FUNCTIONS
+#define HEADER_FUNCTIONS
+
+
 int super_init(SuperBlock * super);
 int root_INode_init(INode * root, int start, int size);
 int root_dir_init(root_directory * dir);
@@ -14,3 +18,6 @@ int init_inode(INode * node);
 int init_dentry(char * name, dir_entry * entry, int index);
 int next_free_fd(fd_table * table);
 int init_fd(file_descriptor * fd, int inode, int read_ptr, int write_ptr);
+
+
+#endif
