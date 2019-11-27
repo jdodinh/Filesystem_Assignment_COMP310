@@ -13,7 +13,7 @@ Questions for the TA:
 #include "sfs_structures.h"
 #include "sfs_functions.h"
 
-#define MAXFILENAME 16
+
 
 SuperBlock super;
 INode root;
