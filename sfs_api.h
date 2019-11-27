@@ -1,7 +1,7 @@
 #ifndef HEADER_API
 #define HEADER_API
 
-#define MAXFNAMELENGTH 16
+#define MAXFILENAME 16
 
 
 void mksfs(int fresh);                              // creates the file system
