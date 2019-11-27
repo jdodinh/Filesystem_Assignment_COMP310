@@ -1,6 +1,3 @@
-#ifndef HEADER_API
-#define HEADER_API
-
 #define MAXFILENAME 16
 
 
@@ -14,7 +11,3 @@ int sfs_fwseek(int fileID, int loc);                // seek (Write) to the locat
 int sfs_fwrite(int fileID,char *buf, int length);   // write buf characters into disk
 int sfs_fread(int fileID,char *buf, int length);    // read characters from disk into buf
 int sfs_remove(char *file);                         // removes a file from the filesystem
-
-
-
-#endif

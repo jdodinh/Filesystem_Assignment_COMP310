@@ -18,6 +18,6 @@ int init_inode(INode * node);
 int init_dentry(char * name, dir_entry * entry, int index);
 int next_free_fd(fd_table * table);
 int init_fd(file_descriptor * fd, int inode, int read_ptr, int write_ptr);
-
+int fd_tbl_init (fd_table * tbl);
 
 #endif
