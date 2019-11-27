@@ -18,27 +18,33 @@ int super_init(SuperBlock * super) {
 }
 
 int root_INode_init(INode * root, int start, int size) {
-    root->mode = 660;
+    root->mode = 760;
     // root->pointers[0] = 0;
     root->num_links = 1;
     root->user_id = getuid();
     root->group_id = getgid();
+    root->valid = true;
     root->size = sizeof(root_directory);
-    for (int i = 0; i < siz; i++) {                  // setting the pointers to the blocks occupied by the root directory.
-        // block_pointer block;                         //Assuming that the number of blocks used is less than 12. 
-        // block.ind = root_block + i;
-        // if (i == 0) {block.prev = EOF;}
-        // else {block.prev = root_block + i - 1;}
-        // if (i == siz-1) {block.next = EOF;}
-        // else {block.next = root_block + i + 1;}
-        system_table.System_INodes[0].pointers[i] = strt + i;
+    for (int i = 0; i < size; i++) {                  // setting the pointers to the blocks occupied by the root directory.
+        root->pointers[i] = start + i;
     }
+    // root->start_block = start;
+    // root->num_blocks = size;
     return 0;
 }
 
 int root_dir_init(root_directory * dir) {
     for (int i = 0; i < NUM_BLOCKS; i++) {
         dir->entries[i].inode = -1;
+    }
+    return 0;
+}
+
+int fd_tbl_init (fd_table * tbl) {
+    for (int i = 0; i< NUM_BLOCKS; i++) {
+        tbl->fds[i].iNode_number = -1;
+        tbl->fds[i].read_pointer = -1;
+        tbl->fds[i].write_pointer = -1;
     }
     return 0;
 }
@@ -51,29 +57,53 @@ int inode_table_init(INodeTable * tbl) {
         tbl->System_INodes[i].mode = -1;
         tbl->System_INodes[i].size = 0;
         tbl->System_INodes[i].num_links = 0;
-        for (int j = 0; j<12; j++) {
+        tbl->System_INodes[i].valid = false;
+        for (int j = 0; j<30; j++) {
             tbl->System_INodes[i].pointers[j] = -1;
         }
+        // tbl->System_INodes[i].start_block = -1;
+        // tbl->System_INodes[i].num_blocks = -1;
     }
     return 0;
 }
 
 int init_inode(INode * node) {
-    node->mode = 660;
-    node->num_links = 1;
+    node->mode = 760;
+    node->num_links = 0;
     node->user_id = getuid();
     node->group_id = getgid();
+    node->size = 0;
+    node ->indirect = -1;
+    for (int i = 0; i < 30; i++) {
+        node->pointers[i] = -1;
+    }
+    node->valid = true;
     return 0;
 }
 
+int init_dentry(char * name, dir_entry * entry, int index) {
+    strcpy(entry->filename, name);
+    entry->inode = index;
+    return 0;
+}
+
+int init_fd(file_descriptor * fd, int inode, int read_ptr, int write_ptr) {
+    fd->iNode_number = inode;
+    fd->read_pointer = read_ptr;
+    fd -> write_pointer = write_ptr;
+    return 0;
+}
+
+
 int init_bitmap(bitmap * map, int start) {
-    for (int i; i<NUM_BLOCKS-1; i++) {
+    for (int i = start; i<NUM_BLOCKS-1; i++) {
         map->map[i] = false;
     }
     for (int i = 0; i<start; i++) {
         map->map[i] = true;
     }
     map->map[NUM_BLOCKS-1] = true;
+    return 0;
 }
 
 int store_block_pointers() {
@@ -95,9 +125,67 @@ int get_block_set(bitmap * system_bitmap, int req_size) {
 
 
 
+int update_disk(SuperBlock * super, INodeTable * table, root_directory * root, bitmap * map) {
+    int strt = 0;
+    int siz = write_blocks(strt, 1, &super);
+    strt = strt + siz;
+    int blocks = ((sizeof(INodeTable)-1)/BLOCK_SIZE) + 1;
+    siz = write_blocks(strt, blocks, &table);
+    strt = strt + siz;
+    blocks = ((sizeof(root_directory)-1)/BLOCK_SIZE+1); 
+    siz = write_blocks(strt, blocks, &root);
+    siz = write_blocks(NUM_BLOCKS-1, 1, &map);
+    file_descriptor fd_table[NUM_BLOCKS];
+    return 0;
+}
+
+
+int reset_filesystem() {
+    return 0;
+}
+
+
+int next_free_inode(INodeTable * table) {
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        if (table->System_INodes[i].valid = false) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int next_free_dentry(root_directory * root_dir) {
+    for (int i = 0; i<NUM_BLOCKS; i++) {
+        if (root_dir->entries[i].inode = -1) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+int next_free_fd(fd_table * table) {
+    for (int i = 0; i<NUM_BLOCKS; i++) {
+        if (table->fds[i].iNode_number = -1) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int check_directory(root_directory * directory, char * filename) {
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        char * entry = directory->entries[i].filename;
+        if (strcmp(entry, filename)==0) {
+            return directory->entries[i].inode;
+        }
+    }
+    return -1;
+}
+
 
 int main() {
-    printf("%lu \n", sizeof(bool));
+    printf("%lu \n", sizeof(root_directory));
     return 0;
 }
 

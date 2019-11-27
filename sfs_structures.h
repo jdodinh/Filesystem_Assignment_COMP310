@@ -22,8 +22,11 @@ typedef struct INode { // Size = 80 bytes
     uid_t user_id;
     uid_t group_id;
     off_t size;
-    int pointers[12];
+    int pointers[30];
     int indirect;
+    bool valid;
+    // int start_block;
+    // int num_blocks;
 } INode;
 
 typedef struct INodeTable{ // Size = 8000 bytes
@@ -46,3 +49,15 @@ typedef struct FileAllocationTable {
 typedef struct bitmap {
     bool map[NUM_BLOCKS];
 } bitmap;
+
+
+typedef struct file_descriptor {
+    int read_pointer;
+    int write_pointer;
+    int iNode_number;
+} file_descriptor;
+
+
+typedef struct fd_table{
+    file_descriptor fds[NUM_BLOCKS];
+} fd_table;
