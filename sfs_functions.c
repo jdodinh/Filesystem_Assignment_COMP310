@@ -72,7 +72,24 @@ int store_block_pointers() {
     return 0;
 }
 
+int get_block_set(bitmap * system_bitmap, int req_size) {
+    int len = 0;
+    for (int i = 0; i<NUM_BLOCKS; i++) {
+        if (system_bitmap->map[i]==false) {len++;}
+        else {len = 0;}
+        if (len ==req_size) {
+            int index = i - req_size + 1;
+        }
+    }
+    return -1;
+}
+
+
+
+
 int main() {
     printf("%lu \n", sizeof(bool));
     return 0;
 }
+
+

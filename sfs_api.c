@@ -39,21 +39,6 @@ void mksfs(int fresh) {
         
         root_INode_init(&root);
         system_table.System_INodes[0] = root;
-        
-        // memcpy(&system_table.System_INodes[0], &root, sizeof(root));
-
-        int blocks = ((sizeof(system_table)-1)/BLOCK_SIZE) + 1; // number of blocks that the system INode table uses up
-        inode_table_init(&system_table);
-        siz = write_blocks(strt, blocks, &system_table);
-        strt = strt + siz;
-
-        root_dir_init(&main_directory);                         // Initializing the root block
-        blocks = ((sizeof(root_directory)-1)/BLOCK_SIZE+1);     // number of blocks that the root directory uses up
-        siz = write_blocks(strt, blocks, &main_directory);
-        strt = strt + siz;
-        init_bitmap(&system_bitmap, strt);
-        siz = write_blocks(strt, 1, &system_bitmap);
-
         for (int i = 0; i < siz; i++) {                  // setting the pointers to the blocks occupied by the root directory.
             // block_pointer block;                         //Assuming that the number of blocks used is less than 12. 
             // block.ind = root_block + i;
@@ -63,9 +48,21 @@ void mksfs(int fresh) {
             // else {block.next = root_block + i + 1;}
             system_table.System_INodes[0].pointers[i] = strt + i;
         }
+        // memcpy(&system_table.System_INodes[0], &root, sizeof(root));
 
+        int blocks = ((sizeof(system_table)-1)/BLOCK_SIZE) + 1; // number of blocks that the system INode table uses up
+        inode_table_init(&system_table);
+        siz = write_blocks(strt, blocks, &system_table);
+        strt = strt + siz;
 
+        root_dir_init(&main_directory);                         // Initializing the root directory
+        blocks = ((sizeof(root_directory)-1)/BLOCK_SIZE+1);     // number of blocks that the root directory uses up
+        siz = write_blocks(strt, blocks, &main_directory);      // get the number of blocks written
+        strt = strt + siz;                                      // next free block
+        init_bitmap(&system_bitmap, strt);                      // initializing the bitmap
+        siz = write_blocks(NUM_BLOCKS-1, 1, &system_bitmap);    // writing the bitmap to the last block      
     }
+    
     else {
         printf("Please enter a valid fresh flag for the disk (0 or 1)");
         // exit(1);
