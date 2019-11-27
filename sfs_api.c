@@ -5,6 +5,13 @@
 #include "sfs_structures.h"
 #include "sfs_functions.h"
 
+SuperBlock super;
+INode root;
+INodeTable system_table;
+root_directory main_directory;
+bitmap system_bitmap;
+
+
 
 // creates the file system
 void mksfs(int fresh) { 
@@ -25,30 +32,39 @@ void mksfs(int fresh) {
             // exit(1);
             return;
         }
-        SuperBlock super;
-        super_init(super);                   // initializing the superblock
-        write_blocks(0, 1, &super);          // Setting a buffer for the root block
-        INode root;
-        root_init(root);                     // Initializing the rot block
-        INodeTable system_table;
+        super_init(&super);                     // initializing the superblock
+        int strt = 0;
+        int siz = write_blocks(strt, 1, &super);             // Setting a buffer for the root block
+        strt = strt + siz;
+        
+        root_INode_init(&root);
         system_table.System_INodes[0] = root;
+        
         // memcpy(&system_table.System_INodes[0], &root, sizeof(root));
-        int blocks = (sizeof(system_table)/BLOCK_SIZE) + 1; // number of blocks that the system INode table uses up
-        int siz = write_blocks(1, blocks, &system_table);
-        int root_block = blocks + 1;
-        blocks = (sizeof(root_directory)/BLOCK_SIZE+1);     // number of blocks that the root directory uses up
-        siz = write_blocks(root_block, blocks, &root);
+
+        int blocks = ((sizeof(system_table)-1)/BLOCK_SIZE) + 1; // number of blocks that the system INode table uses up
+        inode_table_init(&system_table);
+        siz = write_blocks(strt, blocks, &system_table);
+        strt = strt + siz;
+
+        root_dir_init(&main_directory);                         // Initializing the root block
+        blocks = ((sizeof(root_directory)-1)/BLOCK_SIZE+1);     // number of blocks that the root directory uses up
+        siz = write_blocks(strt, blocks, &main_directory);
+        strt = strt + siz;
+        init_bitmap(&system_bitmap, strt);
+        siz = write_blocks(strt, 1, &system_bitmap);
 
         for (int i = 0; i < siz; i++) {                  // setting the pointers to the blocks occupied by the root directory.
-            block_pointer block;
-            block.ind = root_block + i;
-            if (i = 0) {block.prev = NULL;}
-            else {block.prev = root_block + i - 1;}
-            if (i = siz-1) {block.next = NULL;}
-            else {block.next = root_block + i + 1;}
-            system_table.System_INodes[0].pointers[i] = block;
+            // block_pointer block;                         //Assuming that the number of blocks used is less than 12. 
+            // block.ind = root_block + i;
+            // if (i == 0) {block.prev = EOF;}
+            // else {block.prev = root_block + i - 1;}
+            // if (i == siz-1) {block.next = EOF;}
+            // else {block.next = root_block + i + 1;}
+            system_table.System_INodes[0].pointers[i] = strt + i;
         }
-        
+
+
     }
     else {
         printf("Please enter a valid fresh flag for the disk (0 or 1)");

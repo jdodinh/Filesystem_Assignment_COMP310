@@ -1,5 +1,6 @@
 #define NUM_BLOCKS  1000
 #define BLOCK_SIZE 1024
+#include <stdbool.h>
 
 typedef struct SuperBlock {
     int magic;
@@ -21,7 +22,7 @@ typedef struct INode { // Size = 80 bytes
     uid_t user_id;
     uid_t group_id;
     off_t size;
-    block_pointer pointers[12];
+    int pointers[12];
     int indirect;
 } INode;
 
@@ -30,7 +31,7 @@ typedef struct INodeTable{ // Size = 8000 bytes
 } INodeTable;
 
 typedef struct dir_entry {
-    INode inode;
+    int inode;
     char filename[21];
 } dir_entry;
 
@@ -42,3 +43,6 @@ typedef struct FileAllocationTable {
 } FileAllocationTable; 
 
 
+typedef struct bitmap {
+    bool map[NUM_BLOCKS];
+} bitmap;
