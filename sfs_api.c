@@ -178,14 +178,15 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         for (int i = 0; i < num_blk; i++) {
             write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
         }
-    }            
+    }   
 
+    fd.write_pointer = w_ptr + length;
+    fds.fds[fd_index] = fd;     
+    if (fd.write_pointer > i_node.size) {
+        i_node.size = fd.write_pointer;
+    }
     system_inodes.System_INodes[fd.iNode_number] = i_node;
-
-
-
-
-    return -1;
+    return length;
 }
 
 
