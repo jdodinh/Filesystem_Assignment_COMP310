@@ -262,15 +262,19 @@ int get_block_set(bitmap * system_bitmap, int req_size) {
 
 
 int update_disk(SuperBlock * super, INodeTable * table, root_directory * root, bitmap * map) {
+    bool debug = true;
+    if (debug == true) {
+        SuperBlock spr = 
+    }
     int strt = 0;
-    int siz = write_blocks(strt, 1, &super);
+    int siz = write_blocks(strt, 1, super);
     strt = strt + siz;
     int blocks = ((sizeof(INodeTable)-1)/BLOCK_SIZE) + 1;
-    siz = write_blocks(strt, blocks, &table);
+    siz = write_blocks(strt, blocks, table);
     strt = strt + siz;
     blocks = ((sizeof(root_directory)-1)/BLOCK_SIZE+1); 
-    siz = write_blocks(strt, blocks, &root);
-    siz = write_blocks(NUM_BLOCKS-1, 1, &map);
+    siz = write_blocks(strt, blocks, root);
+    siz = write_blocks(NUM_BLOCKS-1, 1, map);
     file_descriptor fd_table[NUM_BLOCKS];
     return 0;
 }
