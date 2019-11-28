@@ -154,32 +154,22 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
     int buf_write_index = w_ptr % BLOCK_SIZE;             // Getting the index of where to write
     int num_blk = ((length - blk_rem)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
-    void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
-
-    if (i_node.size - w_ptr > length) {                  // see if we can write without extending the file size. No new blocks need to be allocated
-        // Load the necessary blocks into a buffer
-        for (int i = 0; i < num_blk; i++) {
-            read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); // reading into the appropriate section in the buffer
-        }
-        memcpy((w_ptr % BLOCK_SIZE)+write_buf, buf, length);
-        for (int i = 0; i < num_blk; i++) {
-            write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
-        }
-    }  
-    else {      // need to allocate new blocks
-        int num_extra_blocks = ((length - i_node.size + w_ptr) % BLOCK_SIZE) + 1;
+    int num_extra_blocks = ((length - i_node.size + w_ptr)/BLOCK_SIZE) + 1;
+    if (num_extra_blocks >0 ) {  //Allocate more blocks to the file
         int new_block = get_block_set(&system_bitmap, num_extra_blocks);
         for (int i = 0; i < num_extra_blocks; i++) {
             i_node.pointers[i_node.size%BLOCK_SIZE + 2 + i] = new_block + i;
         }
-        for (int i = 0; i < num_blk; i++) {
-            read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
-        }
-        memcpy((w_ptr % BLOCK_SIZE)+write_buf, buf, length);
-        for (int i = 0; i < num_blk; i++) {
-            write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
-        }
-    }   
+        num_blk = num_blk + w_ptr_blk - 1;
+    }
+    void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
+    for (int i = 0; i < num_blk; i++) {
+        read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+    }
+    memcpy(w_ptr+write_buf, buf, length);
+    for (int i = 0; i < num_blk; i++) {
+        write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+    }
 
     fd.write_pointer = w_ptr + length;
     fds.fds[fd_index] = fd;     
@@ -188,6 +178,34 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     }
     system_inodes.System_INodes[fd.iNode_number] = i_node;
     return length;
+
+
+    // if (i_node.size - w_ptr > length) {                  // see if we can write without extending the file size. No new blocks need to be allocated
+    //     // Load the necessary blocks into a buffer
+    //     for (int i = 0; i < num_blk; i++) {
+    //         read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); // reading into the appropriate section in the buffer
+    //     }
+    //     memcpy((w_ptr % BLOCK_SIZE)+write_buf, buf, length);
+    //     for (int i = 0; i < num_blk; i++) {
+    //         write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
+    //     }
+    // }  
+    // else {      // need to allocate new blocks
+    //     int num_extra_blocks = ((length - i_node.size + w_ptr) % BLOCK_SIZE) + 1;
+    //     int new_block = get_block_set(&system_bitmap, num_extra_blocks);
+    //     for (int i = 0; i < num_extra_blocks; i++) {
+    //         i_node.pointers[i_node.size%BLOCK_SIZE + 2 + i] = new_block + i;
+    //     }
+    //     for (int i = 0; i < num_blk; i++) {
+    //         read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
+    //     }
+    //     memcpy((w_ptr % BLOCK_SIZE)+write_buf, buf, length);
+    //     for (int i = 0; i < num_blk; i++) {
+    //         write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
+    //     }
+    // }   
+
+    
 }
 
 
