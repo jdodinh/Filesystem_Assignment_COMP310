@@ -83,7 +83,7 @@ int sfs_fopen(char *name) {         // opens the given file
     int inode = check_directory(&root_dir, name);
 
     if (inode >= 0) {   // If a file exists, we check if it is open
-        int fd = check_fd_table(inode);
+        int fd = check_fd_table(&fds, inode);
     }
     // Check if the file is already open
     if (inode < 0) {
