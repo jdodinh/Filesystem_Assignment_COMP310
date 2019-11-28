@@ -149,14 +149,14 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     }
     file_descriptor fd = fds.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
-    int w_ptr = fd.write_pointer;                         // getting the location of the write pointer
-    int w_ptr_blk = (w_ptr) / BLOCK_SIZE + 1;             // Getting the index of the block in which the write pointer currently is
+    int w_ptr = fd.write_pointer;                        // getting the location of the write pointer
+    int w_ptr_blk = w_ptr/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
     int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
     int buf_write_index = w_ptr % BLOCK_SIZE;             // Getting the index of where to write
     int num_blk = ((length - blk_rem)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
     void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
 
-    if (i_node.size - w_ptr <= length) {                  // see if we can write without extending the file size. No new blocks need to be allocated
+    if (i_node.size - w_ptr > length) {                  // see if we can write without extending the file size. No new blocks need to be allocated
         // Load the necessary blocks into a buffer
         for (int i = 0; i < num_blk; i++) {
             read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); // reading into the appropriate section in the buffer
