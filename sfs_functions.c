@@ -147,7 +147,7 @@ int reset_filesystem() {
 
 int next_free_inode(INodeTable * table) {
     for (int i = 0; i < NUM_BLOCKS; i++) {
-        if (table->System_INodes[i].valid = false) {
+        if (table->System_INodes[i].valid == false) {
             return i;
         }
     }
@@ -156,7 +156,7 @@ int next_free_inode(INodeTable * table) {
 
 int next_free_dentry(root_directory * root_dir) {
     for (int i = 0; i<NUM_BLOCKS; i++) {
-        if (root_dir->entries[i].inode = -1) {
+        if (root_dir->entries[i].inode == -1) {
             return i;
         }
     }
@@ -166,7 +166,7 @@ int next_free_dentry(root_directory * root_dir) {
 
 int next_free_fd(fd_table * table) {
     for (int i = 0; i<NUM_BLOCKS; i++) {
-        if (table->fds[i].iNode_number = -1) {
+        if (table->fds[i].iNode_number == -1) {
             return i;
         }
     }
@@ -183,11 +183,6 @@ int check_directory(root_directory * directory, char * filename) {
     return -1;
 }
 
-
-int main() {
-    printf("%lu \n", sizeof(root_directory));
-    return 0;
-}
 
 
 

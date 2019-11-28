@@ -46,6 +46,7 @@ typedef struct INode { // Size = 80 bytes
     // int num_blocks;
 } INode;
 
+
 typedef struct INodeTable{ // Size = 8000 bytes
     INode System_INodes[NUM_BLOCKS];
 } INodeTable;
