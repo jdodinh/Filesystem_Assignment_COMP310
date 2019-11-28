@@ -141,12 +141,13 @@ int sfs_fclose(int fileID) {            // closes the given file
 };                      
 
 int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters into disk
-    int fd_index = check_fd_table(&fds, fileID);      // Check the file in the open file descriptor table
-    if (fd_index < 0) {
+    // file_descriptor fd = fds.fds[fileID];
+    int fd_index = check_fd_table(&fds, fds.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
+    if (fd_index != fileID) {
         printf("ERROR: The given file is not open");
         return -1;
     }
-    file_descriptor fd = fds.fds[fd_index];               // getting the file descriptor of the file
+    file_descriptor fd = fds.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
     int w_ptr = fd.write_pointer;                         // getting the location of the write pointer
     int w_ptr_blk = (w_ptr) / BLOCK_SIZE + 1;             // Getting the index of the block in which the write pointer currently is
