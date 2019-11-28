@@ -168,7 +168,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
             }
         }
         
-        num_blk = num_blk + w_ptr_blk - 1;
+        num_blk = num_extra_blocks + w_ptr_blk + 1;  // Check credibility of this statement !!!!
     }
     void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
     for (int i = 0; i < num_blk; i++) {
