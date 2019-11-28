@@ -157,9 +157,17 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
 
     if (num_extra_blocks >0 ) {  //Allocate more blocks to the file
         int new_block = get_block_set(&system_bitmap, num_extra_blocks);
-        for (int i = 0; i < num_extra_blocks; i++) {
-            i_node.pointers[i_node.size%BLOCK_SIZE + 2 + i] = new_block + i;
+        if (i_node.size%BLOCK_SIZE == 0) {
+            for (int i = 0; i < num_extra_blocks; i++) {
+                i_node.pointers[i_node.size/BLOCK_SIZE + i] = new_block + i;
+            }
         }
+        else {
+            for (int i = 0; i < num_extra_blocks; i++) {
+                i_node.pointers[i_node.size/BLOCK_SIZE + 1 + i] = new_block + i;
+            }
+        }
+        
         num_blk = num_blk + w_ptr_blk - 1;
     }
     void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
