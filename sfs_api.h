@@ -101,3 +101,4 @@ int next_free_fd(fd_table * table);
 int init_fd(file_descriptor * fd, int inode, int read_ptr, int write_ptr);
 int fd_tbl_init (fd_table * tbl);
 int check_fd_table(fd_table * tbl, int inode);
+int mark_blocks(bitmap * system_bitmap, int new_block, int num_extra_blocks);

@@ -132,16 +132,16 @@ main(int argc, char **argv)
     }
   }
 
-//   if (sfs_fclose(fds[1]) != 0) {
-//     fprintf(stderr, "ERROR: close of handle %d failed\n", fds[1]);
-//     error_count++;
-//   }
+  if (sfs_fclose(fds[1]) != 0) {
+    fprintf(stderr, "ERROR: close of handle %d failed\n", fds[1]);
+    error_count++;
+  }
 
-//   /* Sneaky attempt to close already closed file handle. */
-//   if (sfs_fclose(fds[1]) == 0) {
-//     fprintf(stderr, "ERROR: close of stale handle %d succeeded\n", fds[1]);
-//     error_count++;
-//   }
+  /* Sneaky attempt to close already closed file handle. */
+  if (sfs_fclose(fds[1]) == 0) {
+    fprintf(stderr, "ERROR: close of stale handle %d succeeded\n", fds[1]);
+    error_count++;
+  }
 
 //   printf("File %s now has length %d and %s now has length %d:\n",
 //          names[0], filesize[0], names[1], filesize[1]);
