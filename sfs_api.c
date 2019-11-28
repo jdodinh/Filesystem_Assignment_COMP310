@@ -84,6 +84,10 @@ int sfs_fopen(char *name) {         // opens the given file
 
     if (inode >= 0) {   // If a file exists, we check if it is open
         int fd = check_fd_table(&fds, inode);
+        if (fd >= 0) {
+            // File already open
+            return fd;
+        }
     }
     // Check if the file is already open
     if (inode < 0) {
@@ -335,7 +339,7 @@ int check_directory(root_directory * directory, char * filename) {
 int check_fd_table(fd_table * tbl, int inode) {
     for (int i = 0; i < NUM_BLOCKS; i++) {
         if (tbl->fds[i].iNode_number == inode) {
-            return inode;
+            return i;
         }
     }
     return -1;
