@@ -23,7 +23,6 @@ bitmap system_bitmap;
 fd_table fds;
 
 
-
 // creates the file system
 // TODO: complete the section shen fresh flag = 0
 void mksfs(int fresh) { 
@@ -127,22 +126,75 @@ int sfs_fopen(char *name) {         // opens the given file
         fds.fds[new_fd_index] = new_fd;
         return new_fd_index;
     }
-
     return 0;
 }                          
 
-int sfs_fclose(int fileID) {   // closes the given file
+int sfs_fclose(int fileID) {            // closes the given file
+    int fd = check_fd_table(&fds, fileID);
+    if (fd >= 0) {
+        fds.fds[fd].iNode_number = -1;
+        fds.fds[fd].read_pointer = -1;
+        fds.fds[fd].write_pointer = -1;
+        return 0;
+    }
     return -1;
 };                      
-int sfs_frseek(int fileID, int loc) {    // seek (Read) to the location from beginning 
-    return -1;
-}                 
-int sfs_fwseek(int fileID, int loc){  // seek (Write) to the location from beginning 
-    return -1;
-}            
+
 int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters into disk
+    int fd_index = check_fd_table(&fds, fileID);      // Check the file in the open file descriptor table
+    if (fd_index < 0) {
+        printf("ERROR: The given file is not open");
+        return -1;
+    }
+    file_descriptor fd = fds.fds[fd_index];               // getting the file descriptor of the file
+    INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
+    int w_ptr = fd.write_pointer;                         // getting the location of the write pointer
+    int w_ptr_blk = (w_ptr) / BLOCK_SIZE + 1;             // Getting the index of the block in which the write pointer currently is
+    int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
+    int buf_write_index = w_ptr % BLOCK_SIZE;             // Getting the index of where to write
+    int num_blk = ((length - blk_rem)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
+    void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
+
+    if (i_node.size - w_ptr <= length) {                  // see if we can write without extending the file size. No new blocks need to be allocated
+        // Load the necessary blocks into a buffer
+        for (int i = 0; i < num_blk; i++) {
+            read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); // reading into the appropriate section in the buffer
+        }
+        memcpy((w_ptr % BLOCK_SIZE)+write_buf, buf, length);
+        for (int i = 0; i < num_blk; i++) {
+            write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
+        }
+    }  
+    else {      // need to allocate new blocks
+        int num_extra_blocks = ((length - i_node.size + w_ptr) % BLOCK_SIZE) + 1;
+        int new_block = get_block_set(&system_bitmap, num_extra_blocks);
+        for (int i = 0; i < num_extra_blocks; i++) {
+            i_node.pointers[i_node.size%BLOCK_SIZE + 2 + i] = new_block + i;
+        }
+        for (int i = 0; i < num_blk; i++) {
+            read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
+        }
+        memcpy((w_ptr % BLOCK_SIZE)+write_buf, buf, length);
+        for (int i = 0; i < num_blk; i++) {
+            write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
+        }
+    }            
+
+    system_inodes.System_INodes[fd.iNode_number] = i_node;
+
+
+
+
     return -1;
 }
+
+
+int sfs_frseek(int fileID, int loc) {   // seek (Read) to the location from beginning 
+    return -1;
+}                 
+int sfs_fwseek(int fileID, int loc){    // seek (Write) to the location from beginning 
+    return -1;
+}            
 int sfs_fread(int fileID,char *buf, int length){          // read characters from disk into buf
     return -1;
 } 
@@ -150,6 +202,15 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
     return -1;
 }                 
 
+
+
+
+
+// #############################################################################################################
+// ######################################     /------------------\     #########################################
+// ######################################     | HELPER FUNCTIONS |     #########################################
+// ######################################     \__________________/     #########################################
+// #############################################################################################################
 
 
 int super_init(SuperBlock * super) {

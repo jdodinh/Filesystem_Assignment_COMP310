@@ -106,31 +106,31 @@ main(int argc, char **argv)
 
   printf("Two files created with zero length:\n");
 
-//   for (i = 0; i < 2; i++) {
-//     for (j = 0; j < filesize[i]; j += chunksize) {
-//       if ((filesize[i] - j) < 10) {
-//         chunksize = filesize[i] - j;
-//       }
-//       else {
-//         chunksize = (rand() % (filesize[i] - j)) + 1;
-//       }
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < filesize[i]; j += chunksize) {
+      if ((filesize[i] - j) < 10) {
+        chunksize = filesize[i] - j;
+      }
+      else {
+        chunksize = (rand() % (filesize[i] - j)) + 1;
+      }
 
-//       if ((buffer = malloc(chunksize)) == NULL) {
-//         fprintf(stderr, "ABORT: Out of memory!\n");
-//         exit(-1);
-//       }
-//       for (k = 0; k < chunksize; k++) {
-//         buffer[k] = (char) (j+k);
-//       }
-//       tmp = sfs_fwrite(fds[i], buffer, chunksize);
-//       if (tmp != chunksize) {
-//         fprintf(stderr, "ERROR: Tried to write %d bytes, but wrote %d\n", 
-//                 chunksize, tmp);
-//         error_count++;
-//       }
-//       free(buffer);
-//     }
-//   }
+      if ((buffer = malloc(chunksize)) == NULL) {
+        fprintf(stderr, "ABORT: Out of memory!\n");
+        exit(-1);
+      }
+      for (k = 0; k < chunksize; k++) {
+        buffer[k] = (char) (j+k);
+      }
+      tmp = sfs_fwrite(fds[i], buffer, chunksize);
+      if (tmp != chunksize) {
+        fprintf(stderr, "ERROR: Tried to write %d bytes, but wrote %d\n", 
+                chunksize, tmp);
+        error_count++;
+      }
+      free(buffer);
+    }
+  }
 
 //   if (sfs_fclose(fds[1]) != 0) {
 //     fprintf(stderr, "ERROR: close of handle %d failed\n", fds[1]);
@@ -376,7 +376,8 @@ main(int argc, char **argv)
 //     }
 //   }
 
-//   fprintf(stderr, "Test program exiting with %d errors\n", error_count);
-//   return (error_count);
+  fprintf(stderr, "Test program exiting with %d errors\n", error_count);
+  // printf("error cound it %d", error_count);
+  return (error_count);
 }
 
