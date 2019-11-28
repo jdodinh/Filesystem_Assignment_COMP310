@@ -81,6 +81,11 @@ int sfs_getfilesize(const char* path) {            // get the size of the given 
 int sfs_fopen(char *name) {         // opens the given file
 
     int inode = check_directory(&root_dir, name);
+
+    if (inode >= 0) {   // If a file exists, we check if it is open
+        int fd = check_fd_table(inode);
+    }
+    // Check if the file is already open
     if (inode < 0) {
         // file name doesn't exist, we're creating a new file
         int new_dentry_index = next_free_dentry(&root_dir);
@@ -262,9 +267,12 @@ int get_block_set(bitmap * system_bitmap, int req_size) {
 
 
 int update_disk(SuperBlock * super, INodeTable * table, root_directory * root, bitmap * map) {
-    bool debug = true;
+    bool debug = false;
     if (debug == true) {
-        SuperBlock spr = 
+        SuperBlock sup = *super;
+        INodeTable tbl = *table;
+        root_directory rt = *root;
+        bitmap mp = *map;
     }
     int strt = 0;
     int siz = write_blocks(strt, 1, super);
@@ -318,6 +326,16 @@ int check_directory(root_directory * directory, char * filename) {
         char * entry = directory->entries[i].filename;
         if (strcmp(entry, filename)==0) {
             return directory->entries[i].inode;
+        }
+    }
+    return -1;
+}
+
+
+int check_fd_table(fd_table * tbl, int inode) {
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        if (tbl->fds[i].iNode_number == inode) {
+            return inode;
         }
     }
     return -1;
