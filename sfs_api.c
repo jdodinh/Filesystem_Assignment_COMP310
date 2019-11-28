@@ -172,14 +172,19 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
                 num_blk = num_extra_blocks + w_ptr_blk + 1;
             }
         }
-        
           // Check credibility of this statement !!!!
     }
     void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
     for (int i = 0; i < num_blk; i++) {
         read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
     }
-    memcpy(w_ptr+write_buf, buf, length);
+    // memcpy(w_ptr+write_buf, buf, length);
+    int bytes = 0;
+    for (int j = 0; j < length; j++) {
+        memcpy(w_ptr + write_buf + j, buf+j, 1);
+        bytes++;
+    }
+
     for (int i = 0; i < num_blk; i++) {
         write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
     }
@@ -190,7 +195,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         i_node.size = fd.write_pointer;
     }
     system_inodes.System_INodes[fd.iNode_number] = i_node;
-    return length;
+    return bytes;
 
 
     // if (i_node.size - w_ptr > length) {                  // see if we can write without extending the file size. No new blocks need to be allocated

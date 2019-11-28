@@ -143,8 +143,7 @@ main(int argc, char **argv)
     error_count++;
   }
 
-//   printf("File %s now has length %d and %s now has length %d:\n",
-//          names[0], filesize[0], names[1], filesize[1]);
+  printf("File %s now has length %d and %s now has length %d:\n", names[0], filesize[0], names[1], filesize[1]);
 
 //   /* Just to be cruel - attempt to read from a closed file handle. 
 //    */
