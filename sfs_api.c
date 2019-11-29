@@ -72,11 +72,6 @@ void mksfs(int fresh) {
     return;
 }
 
-int sfs_getnextfilename(char *fname);               // get the name of the next file in directory 
-int sfs_getfilesize(const char* path) {            // get the size of the given file
-
-    return 0;
-}
 int sfs_fopen(char *name) {         // opens the given file
 
     int inode = check_directory(&root_dir, name);
@@ -138,7 +133,31 @@ int sfs_fclose(int fileID) {            // closes the given file
         return 0;
     }
     return -1;
-};                      
+};            
+
+int sfs_remove(char *file) {              // removes a file from the filesystem
+    int inode = check_directory(&root_dir, file);  // checks if the file exists in the directory
+
+    if (inode >= 0) {   // If a file exists, we check if it is open
+        int fd = check_fd_table(&fds, inode);
+        if (fd >= 0) {
+            // File already open
+            sfs_fclose(fd);
+        }
+        // DEALLOCATE ALL THE BLOCKS
+        INode node = system_inodes.System_INodes[inode];
+        for (int i = 0; i< 30; i++) {
+            system_bitmap.map[node.pointers[i]] = false;
+        }
+        int err = reset_inode(&system_inodes.System_INodes[inode]);
+        return 0;
+        
+    }
+
+
+    return -1;
+}                 
+
 
 int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters into disk
     // file_descriptor fd = fds.fds[fileID];
@@ -228,17 +247,49 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
 
 
 int sfs_frseek(int fileID, int loc) {   // seek (Read) to the location from beginning 
-    return -1;
+    int fd_index = check_fd_table(&fds, fds.fds[fileID].iNode_number);
+    if (fd_index != fileID) {
+        printf("ERROR: The given file is not open");
+        return -1;
+    }
+
+    file_descriptor fd = fds.fds[fileID];               // getting the file descriptor of the file
+    INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
+    if (loc>=i_node.size) {
+        printf("Error: location out of range");
+        return -1;
+    }
+    fd.read_pointer = loc;
+    fds.fds[fileID] = fd;
+    return 0;
 }                 
 int sfs_fwseek(int fileID, int loc){    // seek (Write) to the location from beginning 
-    return -1;
+    int fd_index = check_fd_table(&fds, fds.fds[fileID].iNode_number);
+    if (fd_index != fileID) {
+        printf("ERROR: The given file is not open");
+        return -1;
+    }
+
+    file_descriptor fd = fds.fds[fileID];               // getting the file descriptor of the file
+    INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
+    if (loc>=i_node.size) {
+        printf("Error: location out of range");
+        return -1;
+    }
+    fd.write_pointer = loc;
+    fds.fds[fileID] = fd;
+    return 0;
 }            
 int sfs_fread(int fileID,char *buf, int length){          // read characters from disk into buf
     return -1;
 } 
-int sfs_remove(char *file) {              // removes a file from the filesystem
+
+int sfs_getnextfilename(char *fname) {      // get the name of the next file in directory 
     return -1;
-}                 
+}               
+int sfs_getfilesize(const char* path) {            // get the size of the given file
+    return -1;
+}
 
 
 
@@ -299,7 +350,7 @@ int inode_table_init(INodeTable * tbl) {
         // tbl->System_INodes[i].user_id = -1;
         tbl->System_INodes[i].indirect = -1;
         tbl->System_INodes[i].mode = -1;
-        tbl->System_INodes[i].size = 0;
+        tbl->System_INodes[i].size = -1;
         tbl->System_INodes[i].num_links = 0;
         tbl->System_INodes[i].valid = false;
         for (int j = 0; j<30; j++) {
@@ -310,6 +361,20 @@ int inode_table_init(INodeTable * tbl) {
     }
     return 0;
 }
+
+
+int reset_inode(INode * node) {
+    node->indirect = -1;
+    node->mode = -1;
+    node->size = 0;
+    node->num_links = 0;
+    for (int j = 0; j<30; j++) {
+        node->pointers[j] = -1;
+    }
+    node->valid = false;
+    return 0;
+}
+
 
 int init_inode(INode * node) {
     node->mode = 760;

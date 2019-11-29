@@ -145,17 +145,17 @@ main(int argc, char **argv)
 
   printf("File %s now has length %d and %s now has length %d:\n", names[0], filesize[0], names[1], filesize[1]);
 
-//   /* Just to be cruel - attempt to read from a closed file handle. 
-//    */
-//   if (sfs_fread(fds[1], fixedbuf, sizeof(fixedbuf)) > 0) {
-//     fprintf(stderr, "ERROR: read from a closed file handle?\n");
-//     error_count++;
-//   }
+  /* Just to be cruel - attempt to read from a closed file handle. 
+   */
+  if (sfs_fread(fds[1], fixedbuf, sizeof(fixedbuf)) > 0) {
+    fprintf(stderr, "ERROR: read from a closed file handle?\n");
+    error_count++;
+  }
 
-//   fds[1] = sfs_fopen(names[1]);
+  fds[1] = sfs_fopen(names[1]);
   
-//   sfs_fseek(0, 0);
-//   sfs_fseek(1, 0);
+  sfs_fseek(0, 0);
+  sfs_fseek(1, 0);
   
 //   for (i = 0; i < 2; i++) {
 //     for (j = 0; j < filesize[i]; j += chunksize) {
