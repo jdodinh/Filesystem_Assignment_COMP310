@@ -40,7 +40,7 @@ typedef struct INode { // Size = 80 bytes
     // uid_t user_id;
     // uid_t group_id;
     int size;
-    int pointers[30];
+    int pointers[12];
     int indirect;
     int num_blocks;
     bool valid;

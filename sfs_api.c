@@ -57,11 +57,12 @@ void mksfs(int fresh) {
         blocks = ((sizeof(root_directory)-1)/BLOCK_SIZE+1);     // number of blocks that the root directory uses up
         siz = write_blocks(strt, blocks, &root_dir);            // get the number of blocks written        
         system_inodes.System_INodes[0] = root;
+        strt = strt + siz;
 
         init_bitmap(&system_bitmap, strt);                      // initializing the bitmap
         write_blocks(NUM_BLOCKS-1, 1, &system_bitmap);    // writing the bitmap to the last block
-        root_INode_init(&system_inodes.System_INodes[0], strt, siz); //initialize the root inode
-        
+        root_INode_init(&system_inodes.System_INodes[0], strt-siz, siz); //initialize the root inode
+
         fd_tbl_init(&fds);
     }
     
@@ -174,43 +175,103 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
     int num_blk = ((length - blk_rem)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
     int num_extra_blocks = ((length - i_node.size + w_ptr)/BLOCK_SIZE) + 1;
+    int blk_number = i_node.num_blocks;
+    indirect ind;
 
-    if (num_extra_blocks >0 ) {  //Allocate more blocks to the file
+    if (num_extra_blocks >0 ) {  // Allocate more blocks to the file
+        
         int new_block = get_block_set(&system_bitmap, num_extra_blocks);
         if (new_block >= 0) {
             mark_blocks(&system_bitmap, new_block, num_extra_blocks);
         }
-        if (i_node.size%BLOCK_SIZE == 0) {
-            for (int i = 0; i < num_extra_blocks; i++) {
-                i_node.pointers[i_node.size/BLOCK_SIZE + i] = new_block + i;
-                num_blk = num_extra_blocks + w_ptr_blk;
+        i_node.num_blocks = blk_number + num_extra_blocks;  // new number of blocks of the file
+        if (i_node.num_blocks > 12) {       // If file will need to have indirects
+            if (i_node.indirect < 0) {  // If the file doesn't have an indirect, initialize an indirect
+                i_node.indirect = get_block_set(&system_bitmap, 1);
+                if (i_node.indirect >=0) {
+                    mark_blocks(&system_bitmap, i_node.indirect, 1);
+                }
+                else {return -1;}
+                if (blk_number < 12) { // The case when there is some free blocks in the direct pointers, but we also have to write to indirects
+                    for (int i = blk_number; i<12; i++) {          // Filling remaining direct pointers with block index
+                        i_node.pointers[i] = new_block + i - blk_number;
+                    }
+                    for (int i = 0; i < i_node.num_blocks - 12; i++) {  // Filling the first few indirect blocks
+                        ind.pointers[i] = new_block + 12 - blk_number + i;
+                    }
+                    for (int i = i_node.num_blocks - 12; i < IND_SIZ; i++) {    // filling the rest with -1
+                        ind.pointers[i] = -1;
+                    }
+                }
+                else {
+                    for (int i = 0; i<i_node.num_blocks - 12) {
+                        ind.pointers[i] = new_block + i;
+                    }
+                    for (int i = num_extra_blocks; i<IND_SIZ; i++) {
+                        ind.pointers[i] = -1;
+                    }
+                }
+                write_blocks(i_node.indirect, 1, &ind);
+                return 0;
+            }
+            else {
+                read_blocks(i_node.indirect, 1, &ind);          //Check if this is right!!!
+                for (int i = 0; i < i_node.num_blocks - (blk_number - 12); i++) {
+                    ind.pointers[i + blk_number - 12] = i + new_block;
+                }
             }
         }
         else {
-            for (int i = 0; i < num_extra_blocks; i++) {
-                i_node.pointers[i_node.size/BLOCK_SIZE + 1 + i] = new_block + i;
-                num_blk = num_extra_blocks + w_ptr_blk + 1;
+            for (int i = 0; i < i_node.num_blocks - num_blk; i++) {
+                i_node.pointers[i+num_blk] = new_block + i;
             }
         }
+        
+
+        // if (i_node.size%BLOCK_SIZE == 0) {
+        //     for (int i = 0; i < num_extra_blocks; i++) {
+        //         i_node.pointers[i_node.size/BLOCK_SIZE + i] = new_block + i;
+        //         num_blk = num_extra_blocks + w_ptr_blk;
+        //     }
+        // }
+        // else {
+        //     for (int i = 0; i < num_extra_blocks; i++) {
+        //         i_node.pointers[i_node.size/BLOCK_SIZE + 1 + i] = new_block + i;
+        //         num_blk = num_extra_blocks + w_ptr_blk + 1;
+        //     }
+        // }
           // Check credibility of this statement !!!!
     }
+    num_blk = i_node.num_blocks;
     void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
-    for (int i = 0; i < num_blk; i++) {
+    int bytes = 0;
+    for (int i = 0; i < 12; i++) {
         read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
     }
-    // memcpy(w_ptr+write_buf, buf, length);
-    int bytes = 0;
+    if (num_blk > 12) {
+        for (int i = 0; i < num_blk - 12; i++) {
+            read_blocks(ind.pointers[i], 1, (BLOCK_SIZE * (i+12))+ write_buf);
+        }
+    }
     for (int j = 0; j < length; j++) {
         memcpy(w_ptr + write_buf + j, buf+j, 1);
         bytes++;
     }
 
-    for (int i = 0; i < num_blk; i++) {
+    for (int i = 0; i < 12; i++) {
         write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
     }
+    if (num_blk > 12) {
+        for (int i = 0; i < num_blk - 12; i++) {
+            write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * (i+12))+ write_buf); 
+        }
+    }
+    
+    // memcpy(w_ptr+write_buf, buf, length);
 
     fd.write_pointer = w_ptr + length;
-    fds.fds[fd_index] = fd;     
+    fds.fds[fd_index] = fd;
+    write_blocks(i_node.indirect, 1, &ind);     
     if (fd.write_pointer > i_node.size) {
         i_node.size = fd.write_pointer;
     }
@@ -321,7 +382,7 @@ int root_INode_init(INode * root, int start, int size) {
     // root->group_id = getgid();
     root->valid = true;
     root->size = sizeof(root_directory);
-    root->num_blocks=((size-1)/BLOCK_SIZE) + 1;
+    root->num_blocks=((root->size-1)/BLOCK_SIZE) + 1;
     for (int i = 0; i < 12; i++) {                  // setting the pointers to the blocks occupied by the root directory.
         root->pointers[i] = start + i;
     }
@@ -333,9 +394,9 @@ int root_INode_init(INode * root, int start, int size) {
         mark_blocks(&system_bitmap, root->indirect, 1);
         indirect root_indirect;
         for (int i = 12; i<size; i++) {
-            root_indirect.pointers[i] = start + i;
+            root_indirect.pointers[i-12] = start + i;
         }
-        for (int i = size; i<IND_SIZ; i++) {
+        for (int i = size-12; i<IND_SIZ; i++) {
             root_indirect.pointers[i] = -1;
         }
         write_blocks(root->indirect, 1, &root_indirect);
@@ -402,7 +463,7 @@ int init_inode(INode * node) {
     // node->group_id = getgid();
     node->size = 0;
     node ->indirect = -1;
-    for (int i = 0; i < 30; i++) {
+    for (int i = 0; i < 12; i++) {
         node->pointers[i] = -1;
     }
     node->valid = true;
