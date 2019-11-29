@@ -57,10 +57,11 @@ void mksfs(int fresh) {
         blocks = ((sizeof(root_directory)-1)/BLOCK_SIZE+1);     // number of blocks that the root directory uses up
         siz = write_blocks(strt, blocks, &root_dir);            // get the number of blocks written        
         system_inodes.System_INodes[0] = root;
-        root_INode_init(&system_inodes.System_INodes[0], strt, siz); //initialize the root inode
 
         init_bitmap(&system_bitmap, strt);                      // initializing the bitmap
-        siz = write_blocks(NUM_BLOCKS-1, 1, &system_bitmap);    // writing the bitmap to the last block   
+        write_blocks(NUM_BLOCKS-1, 1, &system_bitmap);    // writing the bitmap to the last block
+        root_INode_init(&system_inodes.System_INodes[0], strt, siz); //initialize the root inode
+        
         fd_tbl_init(&fds);
     }
     
@@ -320,9 +321,26 @@ int root_INode_init(INode * root, int start, int size) {
     // root->group_id = getgid();
     root->valid = true;
     root->size = sizeof(root_directory);
-    for (int i = 0; i < size; i++) {                  // setting the pointers to the blocks occupied by the root directory.
+    root->num_blocks=((size-1)/BLOCK_SIZE) + 1;
+    for (int i = 0; i < 12; i++) {                  // setting the pointers to the blocks occupied by the root directory.
         root->pointers[i] = start + i;
     }
+    if (size>12) {
+        root->indirect = get_block_set(&system_bitmap, 1);
+        if (root->indirect < 0) {
+            printf("Couldn't find a free block");
+        }
+        mark_blocks(&system_bitmap, root->indirect, 1);
+        indirect root_indirect;
+        for (int i = 12; i<size; i++) {
+            root_indirect.pointers[i] = start + i;
+        }
+        for (int i = size; i<IND_SIZ; i++) {
+            root_indirect.pointers[i] = -1;
+        }
+        write_blocks(root->indirect, 1, &root_indirect);
+    }
+    
     // root->start_block = start;
     // root->num_blocks = size;
     return 0;
@@ -352,8 +370,9 @@ int inode_table_init(INodeTable * tbl) {
         tbl->System_INodes[i].mode = -1;
         tbl->System_INodes[i].size = -1;
         tbl->System_INodes[i].num_links = 0;
+        tbl->System_INodes[i].num_blocks = 0;
         tbl->System_INodes[i].valid = false;
-        for (int j = 0; j<30; j++) {
+        for (int j = 0; j<12; j++) {
             tbl->System_INodes[i].pointers[j] = -1;
         }
         // tbl->System_INodes[i].start_block = -1;

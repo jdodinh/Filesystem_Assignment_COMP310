@@ -3,6 +3,7 @@
 
 #define NUM_BLOCKS  1000
 #define BLOCK_SIZE 1024
+#define IND_SIZ (BLOCK_SIZE/4)
 
 #include <stdbool.h>
 
@@ -41,11 +42,15 @@ typedef struct INode { // Size = 80 bytes
     int size;
     int pointers[30];
     int indirect;
+    int num_blocks;
     bool valid;
     // int start_block;
     // int num_blocks;
 } INode;
 
+typedef struct indirect {
+    int pointers[IND_SIZ];
+} indirect;
 
 typedef struct INodeTable{ // Size = 8000 bytes
     INode System_INodes[NUM_BLOCKS];
@@ -102,3 +107,4 @@ int init_fd(file_descriptor * fd, int inode, int read_ptr, int write_ptr);
 int fd_tbl_init (fd_table * tbl);
 int check_fd_table(fd_table * tbl, int inode);
 int mark_blocks(bitmap * system_bitmap, int new_block, int num_extra_blocks);
+int reset_inode(INode * node);
