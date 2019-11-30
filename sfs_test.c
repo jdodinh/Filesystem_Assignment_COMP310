@@ -157,35 +157,35 @@ main(int argc, char **argv)
   sfs_frseek(0, 0);
   sfs_frseek(1, 0);
   
-//   for (i = 0; i < 2; i++) {
-//     for (j = 0; j < filesize[i]; j += chunksize) {
-//       if ((filesize[i] - j) < 10) {
-//         chunksize = filesize[i] - j;
-//       }
-//       else {
-//         chunksize = (rand() % (filesize[i] - j)) + 1;
-//       }
-//       if ((buffer = malloc(chunksize)) == NULL) {
-//         fprintf(stderr, "ABORT: Out of memory!\n");
-//         exit(-1);
-//       }
-//       readsize = sfs_fread(fds[i], buffer, chunksize);
+  // for (i = 0; i < 2; i++) {
+  //   for (j = 0; j < filesize[i]; j += chunksize) {
+  //     if ((filesize[i] - j) < 10) {
+  //       chunksize = filesize[i] - j;
+  //     }
+  //     else {
+  //       chunksize = (rand() % (filesize[i] - j)) + 1;
+  //     }
+  //     if ((buffer = malloc(chunksize)) == NULL) {
+  //       fprintf(stderr, "ABORT: Out of memory!\n");
+  //       exit(-1);
+  //     }
+  //     readsize = sfs_fread(fds[i], buffer, chunksize);
 
-//       if (readsize != chunksize) {
-//         fprintf(stderr, "ERROR: Requested %d bytes, read %d\n", chunksize, readsize);
-//         readsize = chunksize;
-//       }
-//       for (k = 0; k < readsize; k++) {
-//         if (buffer[k] != (char)(j+k)) {
-//           fprintf(stderr, "ERROR: data error at offset %d in file %s (%d,%d)\n",
-//                   j+k, names[i], buffer[k], (char)(j+k));
-//           error_count++;
-//           break;
-//         }
-//       }
-//       free(buffer);
-//     }
-//   }
+  //     if (readsize != chunksize) {
+  //       fprintf(stderr, "ERROR: Requested %d bytes, read %d\n", chunksize, readsize);
+  //       readsize = chunksize;
+  //     }
+  //     for (k = 0; k < readsize; k++) {
+  //       if (buffer[k] != (char)(j+k)) {
+  //         fprintf(stderr, "ERROR: data error at offset %d in file %s (%d,%d)\n",
+  //                 j+k, names[i], buffer[k], (char)(j+k));
+  //         error_count++;
+  //         break;
+  //       }
+  //     }
+  //     free(buffer);
+  //   }
+  // }
 
 //   for (i = 0; i < 2; i++) {
 //     if (sfs_fclose(fds[i]) != 0) {
