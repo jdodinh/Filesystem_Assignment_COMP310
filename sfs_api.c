@@ -150,15 +150,15 @@ int sfs_fopen(char *name) {         // opens the given file
 }                          
 
 int sfs_fclose(int fileID) {            // closes the given file
-    int fd = check_fd_table(&fdescs, fileID);
-    if (fd >= 0) {
-        fdescs.fds[fd].iNode_number = -1;
-        fdescs.fds[fd].read_pointer = -1;
-        fdescs.fds[fd].write_pointer = -1;
+    // int fd = check_fd_table(&fdescs, fileID);
+    if (fdescs.fds[fileID].iNode_number >= 0) {
+        fdescs.fds[fileID].iNode_number = -1;
+        fdescs.fds[fileID].read_pointer = -1;
+        fdescs.fds[fileID].write_pointer = -1;
         return 0;
     }
     return -1;
-};            
+}            
 
 int sfs_remove(char *file) {              // removes a file from the filesystem
     int inode = check_directory(&root_dir, file);  // checks if the file exists in the directory
@@ -195,9 +195,13 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
 
 int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters into disk
     // file_descriptor fd = fdescs.fds[fileID];
-    int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
-    if (fd_index != fileID) {
-        printf("ERROR: The given file is not open");
+    // int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
+    // if (fd_index != fileID) {
+    //     printf("ERROR: The given file is not open");
+    //     return -1;
+    // }
+    if (fdescs.fds[fileID].iNode_number < 0) {
+        printf("ERROR: The given file is not open\n");
         return -1;
     }
     file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
@@ -254,21 +258,27 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         }
         else { // if total number of blocks fits into the direct pointers 
             for (int i = 0; i < i_node.num_blocks - blk_number; i++) {
-                i_node.pointers[i+num_blk] = new_block + i;
+                i_node.pointers[i+blk_number] = new_block + i;
             }
         }
     }
     num_blk = i_node.num_blocks;
     void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
     int bytes = 0;
-    for (int i = 0; i < 12; i++) {
-        read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
-    }
     if (num_blk > 12) {
+        for (int i = 0; i < 12; i++) {
+            read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+        }
         for (int i = 0; i < num_blk - 12; i++) {
             read_blocks(ind.pointers[i], 1, (BLOCK_SIZE * (i+12))+ write_buf);
         }
     }
+    else {
+        for (int i = 0; i < num_blk; i++) {
+            read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+        }
+    }
+        
     for (int j = 0; j < length; j++) {
         memcpy(w_ptr + write_buf + j, buf+j, 1);
         bytes++;
@@ -298,9 +308,13 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
 
 
 int sfs_frseek(int fileID, int loc) {   // seek (Read) to the location from beginning 
-    int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);
-    if (fd_index != fileID) {
-        printf("ERROR: The given file is not open");
+    // int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);
+    // if (fd_index != fileID) {
+    //     printf("ERROR: The given file is not open");
+    //     return -1;
+    // }
+    if (fdescs.fds[fileID].iNode_number < 0) {
+        printf("ERROR: The given file is not open\n");
         return -1;
     }
 
@@ -311,9 +325,9 @@ int sfs_frseek(int fileID, int loc) {   // seek (Read) to the location from begi
     return 0;
 }                 
 int sfs_fwseek(int fileID, int loc){    // seek (Write) to the location from beginning 
-    int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);
-    if (fd_index != fileID) {
-        printf("ERROR: The given file is not open");
+    // int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);
+    if (fdescs.fds[fileID].iNode_number < 0) {
+        printf("ERROR: The given file is not open\n");
         return -1;
     }
 
@@ -329,8 +343,8 @@ int sfs_fwseek(int fileID, int loc){    // seek (Write) to the location from beg
 }            
 int sfs_fread(int fileID,char *buf, int length){          // read characters from disk into buf
     int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
-    if (fd_index != fileID) {
-        printf("ERROR: The given file is not open");
+    if (fdescs.fds[fileID].iNode_number < 0) {
+        printf("ERROR: The given file is not open\n");
         return -1;
     }
 
@@ -365,7 +379,7 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
         memcpy(buf + i, buffer + i + rd, 1);
         bytes ++;
     }
-    free(buffer);
+    // free(buffer);
     return bytes;
 }
 
