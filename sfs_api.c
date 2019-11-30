@@ -33,6 +33,31 @@ void mksfs(int fresh) {
             // exit(1);
             return;
         }
+        read_blocks(0, 1, &super);
+        int IN_table_len = super.IN_tbl_len;
+        int num_blocks = super.system_size;
+        read_blocks(1, IN_table_len, &system_inodes);
+        read_blocks(num_blocks - 1, 1, &system_bitmap);
+        int root_IN = super.root;
+        root = system_inodes.System_INodes[root_IN];
+        fd_tbl_init(&fdescs);
+
+        if (root.num_blocks <= 12) {
+            for (int i = 0; i<root.num_blocks; i++) {
+                read_blocks(root.pointers[i], 1, &root_dir+(i*BLOCK_SIZE));
+            }
+        }
+        else {
+            indirect ind;
+            read_blocks(root.indirect, 1, &ind);
+            for (int i = 0; i<12; i++) {
+                read_blocks(root.pointers[i], 1, &root_dir+(i*BLOCK_SIZE));
+            }
+            for (int i = 12; i < root.num_blocks ; i++) {
+                read_blocks(ind.pointers[i-12], 1, &root_dir + (i*BLOCK_SIZE));
+            }
+        }
+        
         // initialization of the super block
 
     }
@@ -62,8 +87,6 @@ void mksfs(int fresh) {
         init_bitmap(&system_bitmap, strt);                      // initializing the bitmap
         write_blocks(NUM_BLOCKS-1, 1, &system_bitmap);    // writing the bitmap to the last block
         root_INode_init(&system_inodes.System_INodes[0], strt-siz, siz); //initialize the root inode
-
-        fd_tbl_init(&fdescs);
     }
     
     else {
@@ -137,7 +160,7 @@ int sfs_fclose(int fileID) {            // closes the given file
 
 int sfs_remove(char *file) {              // removes a file from the filesystem
     int inode = check_directory(&root_dir, file);  // checks if the file exists in the directory
-
+    char buffer[BLOCK_SIZE] = { 0 };
     if (inode >= 0) {   // If a file exists, we check if it is open
         int fd = check_fd_table(&fdescs, inode);
         if (fd >= 0) {
@@ -146,15 +169,24 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
         }
         // DEALLOCATE ALL THE BLOCKS
         INode node = system_inodes.System_INodes[inode];
-        for (int i = 0; i< 30; i++) {
+        for (int i = 0; i< 12; i++) {
             system_bitmap.map[node.pointers[i]] = false;
+            write_blocks(node.pointers[i], 1, buffer);      // zeroing out the memory
         }
-        int err = reset_inode(&system_inodes.System_INodes[inode]);
+        if (node.indirect >= 0) {
+            indirect ind;
+            read_blocks(node.indirect, 1, &ind);
+            for (int i = 0; i<IND_SIZ; i++) {
+                system_bitmap.map[ind.pointers[i]] = false;
+                write_blocks(ind.pointers[i], 1, buffer);
+            }
+            system_bitmap.map[node.indirect] = false;
+            write_blocks(node.indirect, 1, buffer);
+        }
+        reset_inode(&system_inodes.System_INodes[inode]);
+        update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
         return 0;
-        
     }
-
-
     return -1;
 }                 
 
@@ -398,7 +430,7 @@ int reset_inode(INode * node) {
     node->size = 0;
     node->num_links = 0;
     node->num_blocks = 0;
-    for (int j = 0; j<30; j++) {
+    for (int j = 0; j<12; j++) {
         node->pointers[j] = -1;
     }
     node->valid = false;
