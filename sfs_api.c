@@ -295,7 +295,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
 
 
     fd.write_pointer = w_ptr + length;
-    fdescs.fds[fd_index] = fd;
+    fdescs.fds[fileID] = fd;
     write_blocks(i_node.indirect, 1, &ind);     
     if (fd.write_pointer > i_node.size) {
         i_node.size = fd.write_pointer;
