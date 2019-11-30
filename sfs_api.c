@@ -304,10 +304,6 @@ int sfs_frseek(int fileID, int loc) {   // seek (Read) to the location from begi
 
     file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
-    if (loc>=i_node.size) {
-        printf("Error: location out of range\n");
-        return -1;
-    }
     fd.read_pointer = loc;
     fdescs.fds[fileID] = fd;
     return 0;
@@ -330,7 +326,45 @@ int sfs_fwseek(int fileID, int loc){    // seek (Write) to the location from beg
     return 0;
 }            
 int sfs_fread(int fileID,char *buf, int length){          // read characters from disk into buf
-    return -1;
+    int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
+    if (fd_index != fileID) {
+        printf("ERROR: The given file is not open");
+        return -1;
+    }
+
+    file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
+    INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
+
+    if (fd.read_pointer + length > i_node.size) {
+        printf("Reading will be impossible, reading buffer is not within the file range\n");
+    }
+    void * buffer = (void *) malloc(BLOCK_SIZE * i_node.num_blocks);
+
+    // LOADING THE DATA INTO A FILE BUFFER (MEMORY)
+    if (i_node.indirect < 0) {
+        for (int i = 0; i<i_node.num_blocks; i++) {
+            read_blocks(i_node.pointers[i], 1, buffer + (i*BLOCK_SIZE));
+        }
+    }
+    else {
+        indirect ind;
+        read_blocks(i_node.indirect, 1, &ind);
+        for (int i = 0; i<12; i++) {
+            read_blocks(i_node.pointers[i], 1, buffer + (i*BLOCK_SIZE));
+        }
+        for (int i = 12; i<i_node.num_blocks; i++) {
+            read_blocks(ind.pointers[i - 12], 1, buffer + (i*BLOCK_SIZE));
+        }
+    }
+
+    int bytes = 0;
+    int rd = fd.read_pointer;
+    for (int i = 0; i < length; i++) {
+        memcpy(buf + i, buffer + i + rd, 1);
+        bytes ++;
+    }
+    free(buffer);
+    return bytes;
 } 
 
 int sfs_getnextfilename(char *fname) {      // get the name of the next file in directory 
