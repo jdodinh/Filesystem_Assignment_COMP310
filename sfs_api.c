@@ -179,14 +179,14 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     indirect ind;
 
     if (num_extra_blocks >0 ) {  // Allocate more blocks to the file
-        
-        int new_block = get_block_set(&system_bitmap, num_extra_blocks);
-        if (new_block >= 0) {
-            mark_blocks(&system_bitmap, new_block, num_extra_blocks);
+    // Check if we need to write extra blocks 
+        int new_block = get_block_set(&system_bitmap, num_extra_blocks); // Getting new block set
+        if (new_block >= 0) { 
+            mark_blocks(&system_bitmap, new_block, num_extra_blocks);    // marking new block set as unavailable
         }
-        i_node.num_blocks = blk_number + num_extra_blocks;  // new number of blocks of the file
-        if (i_node.num_blocks > 12) {       // If file will need to have indirects
-            if (i_node.indirect < 0) {  // If the file doesn't have an indirect, initialize an indirect
+        i_node.num_blocks = blk_number + num_extra_blocks;              // new block size of file
+        if (i_node.num_blocks > 12) {       // Check to see if indirect needs to be implemented
+            if (i_node.indirect < 0) {      // If the file doesn't have an indirect, initialize an indirect
                 i_node.indirect = get_block_set(&system_bitmap, 1);
                 if (i_node.indirect >=0) {
                     mark_blocks(&system_bitmap, i_node.indirect, 1);
@@ -203,17 +203,17 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
                         ind.pointers[i] = -1;
                     }
                 }
-                else {
+                else {                  // the case where we update only the indirect blocks
                     for (int i = 0; i<i_node.num_blocks - 12; i++) {
-                        ind.pointers[i] = new_block + i;
+                        ind.pointers[i + blk_number - 12] = new_block + i;
                     }
-                    for (int i = num_extra_blocks; i<IND_SIZ; i++) {
+                    for (int i = i_node.num_blocks - 12; i<IND_SIZ; i++) {
                         ind.pointers[i] = -1;
                     }
                 }
                 write_blocks(i_node.indirect, 1, &ind);
             }
-            else {
+            else {          // If file already has an indirect we update it 
                 read_blocks(i_node.indirect, 1, &ind);          //Check if this is right!!!
                 for (int i = 0; i < num_extra_blocks; i++) {
                     ind.pointers[i + blk_number - 12] = i + new_block;
@@ -225,21 +225,6 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
                 i_node.pointers[i+num_blk] = new_block + i;
             }
         }
-        
-
-        // if (i_node.size%BLOCK_SIZE == 0) {
-        //     for (int i = 0; i < num_extra_blocks; i++) {
-        //         i_node.pointers[i_node.size/BLOCK_SIZE + i] = new_block + i;
-        //         num_blk = num_extra_blocks + w_ptr_blk;
-        //     }
-        // }
-        // else {
-        //     for (int i = 0; i < num_extra_blocks; i++) {
-        //         i_node.pointers[i_node.size/BLOCK_SIZE + 1 + i] = new_block + i;
-        //         num_blk = num_extra_blocks + w_ptr_blk + 1;
-        //     }
-        // }
-          // Check credibility of this statement !!!!
     }
     num_blk = i_node.num_blocks;
     void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
@@ -265,8 +250,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
             write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * (i+12))+ write_buf); 
         }
     }
-    
-    // memcpy(w_ptr+write_buf, buf, length);
+
 
     fd.write_pointer = w_ptr + length;
     fdescs.fds[fd_index] = fd;
@@ -278,33 +262,6 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
     return bytes;
 
-
-    // if (i_node.size - w_ptr > length) {                  // see if we can write without extending the file size. No new blocks need to be allocated
-    //     // Load the necessary blocks into a buffer
-    //     for (int i = 0; i < num_blk; i++) {
-    //         read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); // reading into the appropriate section in the buffer
-    //     }
-    //     memcpy((w_ptr % BLOCK_SIZE)+write_buf, buf, length);
-    //     for (int i = 0; i < num_blk; i++) {
-    //         write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
-    //     }
-    // }  
-    // else {      // need to allocate new blocks
-    //     int num_extra_blocks = ((length - i_node.size + w_ptr) % BLOCK_SIZE) + 1;
-    //     int new_block = get_block_set(&system_bitmap, num_extra_blocks);
-    //     for (int i = 0; i < num_extra_blocks; i++) {
-    //         i_node.pointers[i_node.size%BLOCK_SIZE + 2 + i] = new_block + i;
-    //     }
-    //     for (int i = 0; i < num_blk; i++) {
-    //         read_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
-    //     }
-    //     memcpy((w_ptr % BLOCK_SIZE)+write_buf, buf, length);
-    //     for (int i = 0; i < num_blk; i++) {
-    //         write_blocks(i_node.pointers[i + w_ptr_blk], 1, (BLOCK_SIZE * i)+ write_buf); 
-    //     }
-    // }   
-
-    
 }
 
 
@@ -352,9 +309,6 @@ int sfs_getnextfilename(char *fname) {      // get the name of the next file in 
 int sfs_getfilesize(const char* path) {            // get the size of the given file
     return -1;
 }
-
-
-
 
 
 // #############################################################################################################
@@ -425,8 +379,6 @@ int fd_tbl_init (fd_table * tbl) {
 
 int inode_table_init(INodeTable * tbl) {
     for (int i = 0; i < NUM_BLOCKS; i++) {
-        // tbl->System_INodes[i].group_id = -1;
-        // tbl->System_INodes[i].user_id = -1;
         tbl->System_INodes[i].indirect = -1;
         tbl->System_INodes[i].mode = 0;
         tbl->System_INodes[i].size = -1;
@@ -436,8 +388,7 @@ int inode_table_init(INodeTable * tbl) {
         for (int j = 0; j<12; j++) {
             tbl->System_INodes[i].pointers[j] = -1;
         }
-        // tbl->System_INodes[i].start_block = -1;
-        // tbl->System_INodes[i].num_blocks = -1;
+
     }
     return 0;
 }
@@ -461,8 +412,6 @@ int init_inode(INode * node) {
     node->mode = 760;
     node->num_links = 0;
     node->num_blocks = 0;
-    // node->user_id = getuid();
-    // node->group_id = getgid();
     node->size = 0;
     node ->indirect = -1;
     for (int i = 0; i < 12; i++) {
