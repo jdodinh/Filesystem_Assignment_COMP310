@@ -20,7 +20,7 @@ INode root;
 INodeTable system_inodes;
 root_directory root_dir;
 bitmap system_bitmap;
-fd_table fds;
+fd_table fdescs;
 
 
 // creates the file system
@@ -63,7 +63,7 @@ void mksfs(int fresh) {
         write_blocks(NUM_BLOCKS-1, 1, &system_bitmap);    // writing the bitmap to the last block
         root_INode_init(&system_inodes.System_INodes[0], strt-siz, siz); //initialize the root inode
 
-        fd_tbl_init(&fds);
+        fd_tbl_init(&fdescs);
     }
     
     else {
@@ -79,7 +79,7 @@ int sfs_fopen(char *name) {         // opens the given file
     int inode = check_directory(&root_dir, name);
 
     if (inode >= 0) {   // If a file exists, we check if it is open
-        int fd = check_fd_table(&fds, inode);
+        int fd = check_fd_table(&fdescs, inode);
         if (fd >= 0) {
             // File already open
             return fd;
@@ -90,7 +90,7 @@ int sfs_fopen(char *name) {         // opens the given file
         // file name doesn't exist, we're creating a new file
         int new_dentry_index = next_free_dentry(&root_dir);
         int new_inode_index = next_free_inode(&system_inodes);
-        int new_fd_index = next_free_fd(&fds);
+        int new_fd_index = next_free_fd(&fdescs);
         if (new_inode_index < 0 || new_dentry_index < 0 || new_fd_index <0) {
             printf("ERROR: Couldn't allocate INode. INode table is full, or directory is full, of file descriptor table is full");
             return -1;
@@ -107,7 +107,7 @@ int sfs_fopen(char *name) {         // opens the given file
         file_descriptor fd;
         init_fd(&fd, new_inode_index, 0, 0);
         
-        fds.fds[new_fd_index] = fd;
+        fdescs.fds[new_fd_index] = fd;
 
         update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
 
@@ -119,19 +119,19 @@ int sfs_fopen(char *name) {         // opens the given file
         INode file_node = system_inodes.System_INodes[inode];
         file_descriptor new_fd;
         init_fd(&new_fd, inode, 0, file_node.size);
-        int new_fd_index = next_free_fd(&fds);
-        fds.fds[new_fd_index] = new_fd;
+        int new_fd_index = next_free_fd(&fdescs);
+        fdescs.fds[new_fd_index] = new_fd;
         return new_fd_index;
     }
     return 0;
 }                          
 
 int sfs_fclose(int fileID) {            // closes the given file
-    int fd = check_fd_table(&fds, fileID);
+    int fd = check_fd_table(&fdescs, fileID);
     if (fd >= 0) {
-        fds.fds[fd].iNode_number = -1;
-        fds.fds[fd].read_pointer = -1;
-        fds.fds[fd].write_pointer = -1;
+        fdescs.fds[fd].iNode_number = -1;
+        fdescs.fds[fd].read_pointer = -1;
+        fdescs.fds[fd].write_pointer = -1;
         return 0;
     }
     return -1;
@@ -141,7 +141,7 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
     int inode = check_directory(&root_dir, file);  // checks if the file exists in the directory
 
     if (inode >= 0) {   // If a file exists, we check if it is open
-        int fd = check_fd_table(&fds, inode);
+        int fd = check_fd_table(&fdescs, inode);
         if (fd >= 0) {
             // File already open
             sfs_fclose(fd);
@@ -162,13 +162,13 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
 
 
 int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters into disk
-    // file_descriptor fd = fds.fds[fileID];
-    int fd_index = check_fd_table(&fds, fds.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
+    // file_descriptor fd = fdescs.fds[fileID];
+    int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
     if (fd_index != fileID) {
         printf("ERROR: The given file is not open");
         return -1;
     }
-    file_descriptor fd = fds.fds[fileID];               // getting the file descriptor of the file
+    file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
     int w_ptr = fd.write_pointer;                        // getting the location of the write pointer
     int w_ptr_blk = w_ptr/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
@@ -204,7 +204,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
                     }
                 }
                 else {
-                    for (int i = 0; i<i_node.num_blocks - 12) {
+                    for (int i = 0; i<i_node.num_blocks - 12; i++) {
                         ind.pointers[i] = new_block + i;
                     }
                     for (int i = num_extra_blocks; i<IND_SIZ; i++) {
@@ -212,17 +212,16 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
                     }
                 }
                 write_blocks(i_node.indirect, 1, &ind);
-                return 0;
             }
             else {
                 read_blocks(i_node.indirect, 1, &ind);          //Check if this is right!!!
-                for (int i = 0; i < i_node.num_blocks - (blk_number - 12); i++) {
+                for (int i = 0; i < num_extra_blocks; i++) {
                     ind.pointers[i + blk_number - 12] = i + new_block;
                 }
             }
         }
-        else {
-            for (int i = 0; i < i_node.num_blocks - num_blk; i++) {
+        else { // if total number of blocks fits into the direct pointers 
+            for (int i = 0; i < i_node.num_blocks - blk_number; i++) {
                 i_node.pointers[i+num_blk] = new_block + i;
             }
         }
@@ -270,12 +269,13 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     // memcpy(w_ptr+write_buf, buf, length);
 
     fd.write_pointer = w_ptr + length;
-    fds.fds[fd_index] = fd;
+    fdescs.fds[fd_index] = fd;
     write_blocks(i_node.indirect, 1, &ind);     
     if (fd.write_pointer > i_node.size) {
         i_node.size = fd.write_pointer;
     }
     system_inodes.System_INodes[fd.iNode_number] = i_node;
+    update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
     return bytes;
 
 
@@ -309,37 +309,37 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
 
 
 int sfs_frseek(int fileID, int loc) {   // seek (Read) to the location from beginning 
-    int fd_index = check_fd_table(&fds, fds.fds[fileID].iNode_number);
+    int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);
     if (fd_index != fileID) {
         printf("ERROR: The given file is not open");
         return -1;
     }
 
-    file_descriptor fd = fds.fds[fileID];               // getting the file descriptor of the file
+    file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
     if (loc>=i_node.size) {
-        printf("Error: location out of range");
+        printf("Error: location out of range\n");
         return -1;
     }
     fd.read_pointer = loc;
-    fds.fds[fileID] = fd;
+    fdescs.fds[fileID] = fd;
     return 0;
 }                 
 int sfs_fwseek(int fileID, int loc){    // seek (Write) to the location from beginning 
-    int fd_index = check_fd_table(&fds, fds.fds[fileID].iNode_number);
+    int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);
     if (fd_index != fileID) {
         printf("ERROR: The given file is not open");
         return -1;
     }
 
-    file_descriptor fd = fds.fds[fileID];               // getting the file descriptor of the file
+    file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
     if (loc>=i_node.size) {
         printf("Error: location out of range");
         return -1;
     }
     fd.write_pointer = loc;
-    fds.fds[fileID] = fd;
+    fdescs.fds[fileID] = fd;
     return 0;
 }            
 int sfs_fread(int fileID,char *buf, int length){          // read characters from disk into buf
@@ -428,7 +428,7 @@ int inode_table_init(INodeTable * tbl) {
         // tbl->System_INodes[i].group_id = -1;
         // tbl->System_INodes[i].user_id = -1;
         tbl->System_INodes[i].indirect = -1;
-        tbl->System_INodes[i].mode = -1;
+        tbl->System_INodes[i].mode = 0;
         tbl->System_INodes[i].size = -1;
         tbl->System_INodes[i].num_links = 0;
         tbl->System_INodes[i].num_blocks = 0;
@@ -448,6 +448,7 @@ int reset_inode(INode * node) {
     node->mode = -1;
     node->size = 0;
     node->num_links = 0;
+    node->num_blocks = 0;
     for (int j = 0; j<30; j++) {
         node->pointers[j] = -1;
     }
@@ -459,6 +460,7 @@ int reset_inode(INode * node) {
 int init_inode(INode * node) {
     node->mode = 760;
     node->num_links = 0;
+    node->num_blocks = 0;
     // node->user_id = getuid();
     // node->group_id = getgid();
     node->size = 0;
