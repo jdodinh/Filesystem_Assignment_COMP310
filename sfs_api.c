@@ -87,6 +87,8 @@ void mksfs(int fresh) {
         init_bitmap(&system_bitmap, strt);                      // initializing the bitmap
         write_blocks(NUM_BLOCKS-1, 1, &system_bitmap);    // writing the bitmap to the last block
         root_INode_init(&system_inodes.System_INodes[0], strt-siz, siz); //initialize the root inode
+        fd_tbl_init(&fdescs);
+
     }
     
     else {
@@ -365,7 +367,7 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
     }
     free(buffer);
     return bytes;
-} 
+}
 
 int sfs_getnextfilename(char *fname) {      // get the name of the next file in directory 
     return -1;
