@@ -469,11 +469,11 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
 int sfs_getnextfilename(char *fname) {      // get the name of the next file in directory 
     for (int i = 0; i<NUM_BLOCKS; i++) {
         if (root_dir.entries[i].next == true) {
-            root_dir.entries[i].next == false;
+            root_dir.entries[i].next = false;
             strcpy(fname, root_dir.entries[i].filename);
             for (int j = i; j<NUM_BLOCKS; j++) {
                 if (root_dir.entries[j].inode>=0) {
-                    root_dir.entries[j].next == true;
+                    root_dir.entries[j].next = true;
                     return i;
                 }
             }
@@ -485,7 +485,7 @@ int sfs_getnextfilename(char *fname) {      // get the name of the next file in 
             strcpy(fname, root_dir.entries[j].filename);
             for (int i = j; i<NUM_BLOCKS; i++) {
                 if (root_dir.entries[i].inode>=0) {
-                    root_dir.entries[i].next == true;
+                    root_dir.entries[i].next = true;
                 }
             }
             return j;
