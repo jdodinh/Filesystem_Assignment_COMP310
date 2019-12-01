@@ -89,6 +89,7 @@ void mksfs(int fresh) {
         write_blocks(NUM_BLOCKS-1, 1, &system_bitmap);    // writing the bitmap to the last block
         root_INode_init(&system_inodes.System_INodes[0], strt-siz, siz); //initialize the root inode
         fd_tbl_init(&fdescs);
+        update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
 
     }
     
@@ -227,6 +228,9 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         int new_block = get_block_set(&system_bitmap, num_extra_blocks); // Getting new block set
         if (new_block >= 0) { 
             mark_blocks(&system_bitmap, new_block, num_extra_blocks);    // marking new block set as unavailable
+        }
+        else {
+            return -1;
         }
         i_node.num_blocks = blk_number + num_extra_blocks;              // new block size of file
         if (i_node.num_blocks > 12) {       // Check to see if indirect needs to be implemented
