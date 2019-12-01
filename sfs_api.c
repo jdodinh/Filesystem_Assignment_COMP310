@@ -218,8 +218,9 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int w_ptr = fd.write_pointer;                        // getting the location of the write pointer
     int w_ptr_blk = (w_ptr+1)/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
     int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
-    int buf_length = ((length - blk_rem - 1)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
+    // int buf_length = ((length - blk_rem - 1)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
     int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1;
+    int buf_length = num_extra_blocks + 1;
     int blk_number = i_node.num_blocks;
     indirect ind;
     int remaining_blocks = bitmap_check(&system_bitmap);
@@ -284,7 +285,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     // void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
     void * write_buf = (void *) malloc(BLOCK_SIZE*buf_length);
     int bytes = 0;
-    int buf_ptr = (w_ptr+1)%BLOCK_SIZE;
+    int buf_ptr = (w_ptr)%BLOCK_SIZE; 
     // Getting the indices of the blocks into an array
     int blocks[buf_length];
     if (w_ptr_blk + buf_length > 12) {
