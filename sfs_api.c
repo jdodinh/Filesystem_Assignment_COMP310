@@ -280,7 +280,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
             }
         }
     }
-    int num_blk = i_node.num_blocks;
+    // int num_blk = i_node.num_blocks;
     // void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
     void * write_buf = (void *) malloc(BLOCK_SIZE*buf_length);
     int bytes = 0;
@@ -379,7 +379,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         i_node.size = fd.write_pointer;
     }
     system_inodes.System_INodes[fd.iNode_number] = i_node;
-    free(&ind);
+    // free(&ind);
     free(write_buf);
     update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
     return bytes;
