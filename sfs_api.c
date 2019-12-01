@@ -223,15 +223,9 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int blk_number = i_node.num_blocks;
     indirect ind;
     int remaining_blocks = bitmap_check(&system_bitmap);
-<<<<<<< HEAD
     // printf("%d\n", remaining_blocks);
     if (remaining_blocks <= 525) {
         printf("HelloWorld");
-=======
-    printf(remaining_blocks);
-    if (remaining_blocks<num_extra_blocks) {
-        return -2;
->>>>>>> 3832e9dcf42aa96e7a4e58ab87410e4425b415c7
     }
 
     if (num_extra_blocks >0 ) {  // Allocate more blocks to the file
@@ -426,7 +420,7 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
         // if (ch == '\0') {
         //     return bytes;
         // }
-        bytes ++;
+        bytes++;
     }
     fd.read_pointer = fd.read_pointer + length;
     free(buffer);
