@@ -287,18 +287,18 @@ main(int argc, char **argv)
     }
   }
 
-//   /* Now close all of the open file handles.
-//    */
-//   for (i = 0; i < nopen; i++) {
-//     if (sfs_fclose(fds[i]) != 0) {
-//       fprintf(stderr, "ERROR: close of handle %d failed\n", fds[i]);
-//       error_count++;
-//     }
-//   }
+  /* Now close all of the open file handles.
+   */
+  for (i = 0; i < nopen; i++) {
+    if (sfs_fclose(fds[i]) != 0) {
+      fprintf(stderr, "ERROR: close of handle %d failed\n", fds[i]);
+      error_count++;
+    }
+  }
 
-//   /* Now we try to re-initialize the system.
-//    */
-//   mksfs(0);
+  /* Now we try to re-initialize the system.
+   */
+  mksfs(0);
 
 //   for (i = 0; i < nopen; i++) {
 //     fds[i] = sfs_fopen(names[i]);

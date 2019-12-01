@@ -41,23 +41,24 @@ void mksfs(int fresh) {
         int root_IN = super.root;
         root = system_inodes.System_INodes[root_IN];
         fd_tbl_init(&fdescs);
+        void * root_dir_buf = (void *) malloc(root.num_blocks*BLOCK_SIZE);
 
         if (root.num_blocks <= 12) {
             for (int i = 0; i<root.num_blocks; i++) {
-                read_blocks(root.pointers[i], 1, &root_dir+(i*BLOCK_SIZE));
+                read_blocks(root.pointers[i], 1, root_dir_buf+(i*BLOCK_SIZE));
             }
         }
         else {
             indirect ind;
             read_blocks(root.indirect, 1, &ind);
             for (int i = 0; i<12; i++) {
-                read_blocks(root.pointers[i], 1, &root_dir+(i*BLOCK_SIZE));
+                read_blocks(root.pointers[i], 1, root_dir_buf+(i*BLOCK_SIZE));
             }
             for (int i = 12; i < root.num_blocks ; i++) {
-                read_blocks(ind.pointers[i-12], 1, &root_dir + (i*BLOCK_SIZE));
+                read_blocks(ind.pointers[i-12], 1, root_dir_buf + (i*BLOCK_SIZE));
             }
         }
-        
+        memcpy(&root_dir, root_dir_buf, root.num_blocks*BLOCK_SIZE);
         // initialization of the super block
 
     }
@@ -410,7 +411,7 @@ int super_init(SuperBlock * super) {
     super->system_size = NUM_BLOCKS;
     super->magic = 0xACBD0005;
     super->root = 0;
-    super->IN_tbl_len = NUM_BLOCKS;
+    super->IN_tbl_len = (sizeof(system_inodes) + BLOCK_SIZE -1)/BLOCK_SIZE;
     //complete with I-node table length
     return 0;
 }
