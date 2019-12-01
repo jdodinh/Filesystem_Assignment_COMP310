@@ -232,7 +232,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
 
     // int buf_length = num_extra_blocks;
     int buf_length = (w_ptr + length-1)/BLOCK_SIZE;
-    buf_length = buf_length - w_ptr_blk;
+    buf_length = buf_length - w_ptr_blk + 1;
     indirect ind;
     int remaining_blocks = bitmap_check(&system_bitmap);
     // printf("%d\n", remaining_blocks);
