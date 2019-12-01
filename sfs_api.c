@@ -231,7 +231,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     // i_node.num_blocks = i_node.num_blocks + num_extra_blocks;
 
     // int buf_length = num_extra_blocks;
-    int buf_length = (w_ptr + length-1)/BLOCK_SIZE;
+    int buf_length = (w_ptr + length-1)/BLOCK_SIZE + 1;
     buf_length = buf_length - w_ptr_blk + 1;
     indirect ind;
     int remaining_blocks = bitmap_check(&system_bitmap);
