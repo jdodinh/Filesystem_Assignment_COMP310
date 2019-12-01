@@ -209,6 +209,9 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     //     printf("ERROR: The given file is not open");
     //     return -1;
     // }
+    if (bitmap_check(&system_bitmap)<0) {
+            return -2;
+        }
     if (fdescs.fds[fileID].iNode_number < 0) {
         printf("ERROR: The given file is not open\n");
         return -1;
@@ -232,6 +235,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         else {
             return -1;
         }
+        
         i_node.num_blocks = blk_number + num_extra_blocks;              // new block size of file
         if (i_node.num_blocks > 12) {       // Check to see if indirect needs to be implemented
             if (i_node.indirect < 0) {      // If the file doesn't have an indirect, initialize an indirect
@@ -436,7 +440,20 @@ int sfs_getfilesize(const char* path) {            // get the size of the given 
 // ######################################     \__________________/     #########################################
 // #############################################################################################################
 
-
+int bitmap_check (bitmap * map) {
+    int count = 0;
+    for (int i = 0; i<NUM_BLOCKS; i++) {
+        if (map->map[i] == false) {
+            count++;
+        }
+    }
+    if (count == 0) {
+        return -1;
+    }
+    else {
+        return count;
+    }
+}
 int super_init(SuperBlock * super) {
     super->block_size = BLOCK_SIZE;
     super->system_size = NUM_BLOCKS;
