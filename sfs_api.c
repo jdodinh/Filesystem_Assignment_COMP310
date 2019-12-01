@@ -323,6 +323,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         i_node.size = fd.write_pointer;
     }
     system_inodes.System_INodes[fd.iNode_number] = i_node;
+    free(write_buf);
     update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
     return bytes;
 
