@@ -179,8 +179,9 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
                 system_bitmap.map[node.pointers[i]] = false;
                 write_blocks(node.pointers[i], 1, buffer);      // zeroing out the memory
             }
-            for (int i = 0; i<node.size-12; i++) {
+            for (int i = 0; i<node.num_blocks-12; i++) {
                 system_bitmap.map[ind.pointers[i]] = false;
+                // printf ("Hello world");
                 write_blocks(ind.pointers[i], 1, buffer);
             }
             system_bitmap.map[node.indirect] = false;
