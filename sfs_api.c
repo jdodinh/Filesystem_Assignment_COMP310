@@ -485,7 +485,7 @@ int sfs_getnextfilename(char *fname) {      // get the name of the next file in 
             strcpy(fname, root_dir.entries[j].filename);
             for (int i = j; i<NUM_BLOCKS; i++) {
                 if (root_dir.entries[i].inode>=0) {
-                    root_dir.entries[inode].next == true;
+                    root_dir.entries[i].next == true;
                 }
             }
             return j;
@@ -494,7 +494,7 @@ int sfs_getnextfilename(char *fname) {      // get the name of the next file in 
     return -1;
 }               
 int sfs_getfilesize(const char* path) {            // get the size of the given file
-    int i_node = check_directory(&root_dir, path);
+    int i_node = check_directory(&root_dir, (char*) path);
     if (i_node <0) {
         return -1;
     }
