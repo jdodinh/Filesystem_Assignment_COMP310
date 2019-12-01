@@ -209,9 +209,6 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     //     printf("ERROR: The given file is not open");
     //     return -1;
     // }
-    if (bitmap_check(&system_bitmap)<0) {
-            return -2;
-        }
     if (fdescs.fds[fileID].iNode_number < 0) {
         printf("ERROR: The given file is not open\n");
         return -1;
@@ -225,6 +222,10 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1;
     int blk_number = i_node.num_blocks;
     indirect ind;
+
+    if (bitmap_check(&system_bitmap)<num_extra_blocks) {
+        return -2;
+    }
 
     if (num_extra_blocks >0 ) {  // Allocate more blocks to the file
     // Check if we need to write extra blocks 
