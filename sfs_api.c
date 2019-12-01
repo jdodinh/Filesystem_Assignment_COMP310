@@ -223,9 +223,9 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int blk_number = i_node.num_blocks;
     indirect ind;
     int remaining_blocks = bitmap_check(&system_bitmap);
-    printf(remaining_blocks);
-    if (remaining_blocks<num_extra_blocks) {
-        return -2;
+    // printf("%d\n", remaining_blocks);
+    if (remaining_blocks <= 525) {
+        printf("HelloWorld");
     }
 
     if (num_extra_blocks >0 ) {  // Allocate more blocks to the file
