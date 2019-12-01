@@ -294,6 +294,10 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         }
     }
 
+    if (i_node.indirect > 0) {
+        read_blocks(i_node.indirect, 1, &ind);
+    }
+
     system_inodes.System_INodes[fd.iNode_number] = i_node;
     update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
     
