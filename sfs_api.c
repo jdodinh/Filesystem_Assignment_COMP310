@@ -201,7 +201,6 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
     return -1;
 }                 
 
-
 int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters into disk
    
     if (fdescs.fds[fileID].iNode_number < 0) {
@@ -468,10 +467,40 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
 }
 
 int sfs_getnextfilename(char *fname) {      // get the name of the next file in directory 
+    for (int i = 0; i<NUM_BLOCKS; i++) {
+        if (root_dir.entries[i].next == true) {
+            root_dir.entries[i].next == false;
+            strcpy(fname, root_dir.entries[i].filename);
+            for (int j = i; j<NUM_BLOCKS; j++) {
+                if (root_dir.entries[j].inode>=0) {
+                    root_dir.entries[j].next == true;
+                    return i;
+                }
+            }
+            return 0;
+        }
+    }
+    for (int j = 0; j<NUM_BLOCKS; j++) {
+        if (root_dir.entries[j].inode>=0) {
+            strcpy(fname, root_dir.entries[j].filename);
+            for (int i = j; i<NUM_BLOCKS; i++) {
+                if (root_dir.entries[i].inode>=0) {
+                    root_dir.entries[inode].next == true;
+                }
+            }
+            return j;
+        }
+    }
     return -1;
 }               
 int sfs_getfilesize(const char* path) {            // get the size of the given file
-    return -1;
+    int i_node = check_directory(&root_dir, path);
+    if (i_node <0) {
+        return -1;
+    }
+    int size = system_inodes.System_INodes[i_node].size;
+    return size;
+    
 }
 
 
@@ -601,6 +630,7 @@ int init_inode(INode * node) {
 int init_dentry(char * name, dir_entry * entry, int index) {
     strcpy(entry->filename, name);
     entry->inode = index;
+    entry->next = false;
     return 0;
 }
 

@@ -59,6 +59,7 @@ typedef struct INodeTable{ // Size = 8000 bytes
 typedef struct dir_entry {
     int inode;
     char filename[21];
+    bool next;
 } dir_entry;
 
 typedef struct root_directory {
