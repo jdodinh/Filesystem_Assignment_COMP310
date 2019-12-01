@@ -394,6 +394,9 @@ main(int argc, char **argv)
       if ((i % 100) == 0) {
         fprintf(stderr, "%d\r", i);
       }
+      // if (i == 250) {
+      //   break;
+      // }
 
       memset(fixedbuf, (char)i, sizeof(fixedbuf));
       x = sfs_fwrite(fds[0], fixedbuf, sizeof(fixedbuf));
