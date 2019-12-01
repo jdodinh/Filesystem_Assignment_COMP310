@@ -216,23 +216,23 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
     int w_ptr = fd.write_pointer;                        // getting the location of the write pointer
-    int w_ptr_blk = w_ptr/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
+    int w_ptr_blk = w_ptr/BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
     int blk_number = i_node.num_blocks;
     // int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
     // int buf_length = ((length - blk_rem - 1)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
     // int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1; // CORRECT
     int num_extra_blocks;
-    if ((w_ptr + length) < (blk_number*BLOCK_SIZE)) {
+    if ((w_ptr + length) <= (blk_number*BLOCK_SIZE)) {
         num_extra_blocks = 0;
     }
     else {
-        num_extra_blocks =  (((w_ptr + length) - blk_number*BLOCK_SIZE-1)/BLOCK_SIZE)+1;
+        num_extra_blocks =  (((w_ptr + length) - (blk_number*BLOCK_SIZE)+BLOCK_SIZE-1)/BLOCK_SIZE);
     }
     // i_node.num_blocks = i_node.num_blocks + num_extra_blocks;
 
     // int buf_length = num_extra_blocks;
-    int buf_length = (w_ptr + length-1)/BLOCK_SIZE + 1;
-    buf_length = buf_length - w_ptr_blk + 1;
+    int buf_length = w_ptr + length - (w_ptr_blk*BLOCK_SIZE);
+    buf_length = (buf_length + BLOCK_SIZE -1)/ BLOCK_SIZE;
     indirect ind;
     int remaining_blocks = bitmap_check(&system_bitmap);
     // printf("%d\n", remaining_blocks);
@@ -284,6 +284,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
                 for (int i = 0; i < num_extra_blocks; i++) {
                     ind.pointers[i + blk_number - 12] = i + new_block;
                 }
+                write_blocks(i_node.indirect, 1, &ind);
             }
         }
         else { // if total number of blocks fits into the direct pointers 
@@ -292,11 +293,15 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
             }
         }
     }
+
+    system_inodes.System_INodes[fd.iNode_number] = i_node;
+    update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
+    
     // int num_blk = i_node.num_blocks;
     // void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
-    void * write_buf = (void *) malloc(BLOCK_SIZE*buf_length);
+    void * write_buf = (void *) malloc(BLOCK_SIZE);
     int bytes = 0;
-    int buf_ptr = (w_ptr)%BLOCK_SIZE; 
+    // int buf_ptr = (w_ptr)%BLOCK_SIZE; 
     // Getting the indices of the blocks into an array
     int blocks[buf_length];
     if (w_ptr_blk + buf_length > 12) {
@@ -321,14 +326,46 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     }
 
     for (int i = 0; i<buf_length; i++) {
-        read_blocks(blocks[i], 1, write_buf+(i*BLOCK_SIZE));
+        read_blocks(blocks[i], 1, write_buf);
+        if (i == 0) {
+            int strt = w_ptr%BLOCK_SIZE;
+            if (i == buf_length -1) {
+                for (int j = strt; j<length +strt; j++) {
+                    memcpy(write_buf+j, buf + bytes, 1 );
+                    bytes++;
+                }
+            }
+            else {
+                for (int j = w_ptr%BLOCK_SIZE; j<BLOCK_SIZE; j++) {
+                    memcpy(write_buf+j, buf + bytes, 1 );
+                    bytes++;
+                }
+            }
+           
+            write_blocks(blocks[i], 1, write_buf);
+        }
+        else if (i == buf_length-1) {
+            int bytes1 = bytes;
+            for (int j = 0; j<(length-bytes1); j++) {
+                memcpy(write_buf+j, buf + bytes, 1 );
+                bytes++;
+            }
+            write_blocks(blocks[i], 1, write_buf);
+        }
+        else {
+            for (int j = 0; j<BLOCK_SIZE; j++) {
+                memcpy(write_buf+j, buf + bytes, 1 );
+                bytes++;
+            }
+            write_blocks(blocks[i], 1, write_buf);
+        }
     }
-    for (int j = 0; j<length; j++) {
-        memcpy(write_buf + j + buf_ptr, buf+j, 1);
-        bytes++;
-    }
+    // for (int j = 0; j<length; j++) {
+    //     memcpy(write_buf + j + buf_ptr, buf+j, 1);
+    //     bytes++;
+    // }
 
-
+        
         // if (i == 0) {
         //     for (int j = w_ptr%BLOCK_SIZE; j < BLOCK_SIZE; j++ ) {
         //         memcpy(write_buf+j, buf + bytes, 1 );
