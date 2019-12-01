@@ -102,6 +102,9 @@ void mksfs(int fresh) {
 }
 
 int sfs_fopen(char *name) {         // opens the given file
+    if (strlen(name)>MAXFILENAME) {
+        return -1;
+    }
     int inode = check_directory(&root_dir, name);
     if (inode >= 0) {   // If a file exists, we check if it is open
         int fd = check_fd_table(&fdescs, inode);
@@ -218,6 +221,9 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int num_extra_blocks;
     if ((w_ptr + length) <= (blk_number*BLOCK_SIZE)) {
         num_extra_blocks = 0;
+    }
+    if (w_ptr + length > MAXFILESIZE) {
+        return -1;
     }
     else {
         num_extra_blocks =  (((w_ptr + length) - (blk_number*BLOCK_SIZE)+BLOCK_SIZE-1)/BLOCK_SIZE);

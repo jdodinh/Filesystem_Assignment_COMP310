@@ -1,9 +1,13 @@
-#define MAXFILENAME 16
+#define MAXFILENAME 20
+
+
 
 
 #define NUM_BLOCKS  1000
 #define BLOCK_SIZE 1024
 #define IND_SIZ (BLOCK_SIZE/4)
+
+#define MAXFILESIZE (BLOCK_SIZE*(IND_SIZ+12))
 
 #include <stdbool.h>
 
