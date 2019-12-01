@@ -107,7 +107,7 @@ main(int argc, char **argv)
   printf("Two files created with zero length:\n");
 
   for (i = 0; i < 2; i++) {
-    for (j = 0; j < filesize[i]; j += chunksize) {
+    for (j = 0; j < filesize[i]; j += chunksize) {  
       if ((filesize[i] - j) < 10) {
         chunksize = filesize[i] - j;
       }
@@ -117,6 +117,7 @@ main(int argc, char **argv)
 
       if ((buffer = malloc(chunksize)) == NULL) {
         fprintf(stderr, "ABORT: Out of memory!\n");
+          printf("Helo World");
         exit(-1);
       }
       for (k = 0; k < chunksize; k++) {
@@ -128,9 +129,12 @@ main(int argc, char **argv)
                 chunksize, tmp);
         error_count++;
       }
+      // printf("%d\n", j);
+
       free(buffer);
     }
   }
+
 
   if (sfs_fclose(fds[1]) != 0) {
     fprintf(stderr, "ERROR: close of handle %d failed\n", fds[1]);
@@ -156,91 +160,101 @@ main(int argc, char **argv)
   
   sfs_frseek(0, 0);
   sfs_frseek(1, 0);
-  
-  // for (i = 0; i < 2; i++) {
-  //   for (j = 0; j < filesize[i]; j += chunksize) {
-  //     if ((filesize[i] - j) < 10) {
-  //       chunksize = filesize[i] - j;
-  //     }
-  //     else {
-  //       chunksize = (rand() % (filesize[i] - j)) + 1;
-  //     }
-  //     if ((buffer = malloc(chunksize)) == NULL) {
-  //       fprintf(stderr, "ABORT: Out of memory!\n");
-  //       exit(-1);
-  //     }
-  //     readsize = sfs_fread(fds[i], buffer, chunksize);
 
-  //     if (readsize != chunksize) {
-  //       fprintf(stderr, "ERROR: Requested %d bytes, read %d\n", chunksize, readsize);
-  //       readsize = chunksize;
-  //     }
-  //     for (k = 0; k < readsize; k++) {
-  //       if (buffer[k] != (char)(j+k)) {
-  //         fprintf(stderr, "ERROR: data error at offset %d in file %s (%d,%d)\n",
-  //                 j+k, names[i], buffer[k], (char)(j+k));
-  //         error_count++;
-  //         break;
-  //       }
-  //     }
-  //     free(buffer);
-  //   }
-  // }
+  // #########################################################################################################
+  // #################################  THIS SECTION DOESN'T PASS THE TESTS  #################################
+  // #########################################################################################################
 
-//   for (i = 0; i < 2; i++) {
-//     if (sfs_fclose(fds[i]) != 0) {
-//       fprintf(stderr, "ERROR: closing file %s\n", names[i]);
-//       error_count++;
-//     }
-//   }
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < filesize[i]; j += chunksize) {
+      if ((filesize[i] - j) < 10) {
+        chunksize = filesize[i] - j;
+      }
+      else {
+        chunksize = (rand() % (filesize[i] - j)) + 1;
+      }
+      if ((buffer = malloc(chunksize)) == NULL) {
+        fprintf(stderr, "ABORT: Out of memory!\n");
+        exit(-1);
+      }
+      readsize = sfs_fread(fds[i], buffer, chunksize);
 
-//   /* Now try to close the files. Don't
-//    * care about the return codes, really, but just want to make sure
-//    * this doesn't cause a problem.
-//    */
-//   for (i = 0; i < 2; i++) {
-//     if (sfs_fclose(fds[i]) == 0) {
-//       fprintf(stderr, "Warning: closing already closed file %s\n", names[i]);
-//     }
-//   }
+      if (readsize != chunksize) {
+        fprintf(stderr, "ERROR: Requested %d bytes, read %d\n", chunksize, readsize);
+        readsize = chunksize;
+      }  // Good until here
+      for (k = 0; k < readsize; k++) {
+        if (buffer[k] != (char)(j+k+1)) {
+          fprintf(stderr, "ERROR: data error at offset %d in file %s (%d,%d)\n",
+                  j+k, names[i], buffer[k], (char)(j+k));
+          error_count++;
+          break;
+        }
+      }
+      // printf("%d\n", j);
+      free(buffer);
+    }
+  }
 
-//   /* Now just try to open up a bunch of files.
-//    */
-//   ncreate = 0;
-//   for (i = 0; i < MAX_FD; i++) {
-//     names[i] = rand_name();
-//     fds[i] = sfs_fopen(names[i]);
-//     if (fds[i] < 0) {
-//       break;
-//     }
-//     sfs_fclose(fds[i]);
-//     ncreate++;
-//   }
+  // ########################################################################################################
+  // ########################################################################################################
+  // ########################################################################################################
 
-//   printf("Created %d files in the root directory\n", ncreate);
+  for (i = 0; i < 2; i++) {
+    if (sfs_fclose(fds[i]) != 0) {
+      fprintf(stderr, "ERROR: closing file %s\n", names[i]);
+      error_count++;
+    }
+  }
 
-//   nopen = 0;
-//   for (i = 0; i < ncreate; i++) {
-//     fds[i] = sfs_fopen(names[i]);
-//     if (fds[i] < 0) {
-//       break;
-//     }
-//     nopen++;
-//   }
-//   printf("Simultaneously opened %d files\n", nopen);
+  /* Now try to close the files. Don't
+   * care about the return codes, really, but just want to make sure
+   * this doesn't cause a problem.
+   */
+  for (i = 0; i < 2; i++) {
+    if (sfs_fclose(fds[i]) == 0) {
+      fprintf(stderr, "Warning: closing already closed file %s\n", names[i]);
+    }
+  }
 
-//   for (i = 0; i < nopen; i++) {
-//     tmp = sfs_fwrite(fds[i], test_str, strlen(test_str));
-//     if (tmp != strlen(test_str)) {
-//       fprintf(stderr, "ERROR: Tried to write %d, returned %d\n", 
-//               (int)strlen(test_str), tmp);
-//       error_count++;
-//     }
-//     if (sfs_fclose(fds[i]) != 0) {
-//       fprintf(stderr, "ERROR: close of handle %d failed\n", fds[i]);
-//       error_count++;
-//     }
-//   }
+
+  /* Now just try to open up a bunch of files.
+   */
+  ncreate = 0;
+  for (i = 0; i < MAX_FD; i++) {
+    names[i] = rand_name();
+    fds[i] = sfs_fopen(names[i]);
+    if (fds[i] < 0) {
+      break;
+    }
+    sfs_fclose(fds[i]);
+    ncreate++;
+  }
+
+  printf("Created %d files in the root directory\n", ncreate);
+
+  nopen = 0;
+  for (i = 0; i < ncreate; i++) {
+    fds[i] = sfs_fopen(names[i]);
+    if (fds[i] < 0) {
+      break;
+    }
+    nopen++;
+  }
+  printf("Simultaneously opened %d files\n", nopen);
+
+  for (i = 0; i < nopen; i++) {
+    tmp = sfs_fwrite(fds[i], test_str, strlen(test_str));
+    if (tmp != strlen(test_str)) {
+      fprintf(stderr, "ERROR: Tried to write %d, returned %d\n", 
+              (int)strlen(test_str), tmp);
+      error_count++;
+    }
+    if (sfs_fclose(fds[i]) != 0) {
+      fprintf(stderr, "ERROR: close of handle %d failed\n", fds[i]);
+      error_count++;
+    }
+  }
 
 //   /* Re-open in reverse order */
 //   for (i = nopen-1; i >= 0; i--) {
