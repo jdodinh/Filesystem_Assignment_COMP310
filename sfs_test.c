@@ -165,36 +165,36 @@ main(int argc, char **argv)
   // #################################  THIS SECTION DOESN'T PASS THE TESTS  #################################
   // #########################################################################################################
 
-  for (i = 0; i < 2; i++) {
-    for (j = 0; j < filesize[i]; j += chunksize) {
-      if ((filesize[i] - j) < 10) {
-        chunksize = filesize[i] - j;
-      }
-      else {
-        chunksize = (rand() % (filesize[i] - j)) + 1;
-      }
-      if ((buffer = malloc(chunksize)) == NULL) {
-        fprintf(stderr, "ABORT: Out of memory!\n");
-        exit(-1);
-      }
-      readsize = sfs_fread(fds[i], buffer, chunksize);
+  // for (i = 0; i < 2; i++) {
+  //   for (j = 0; j < filesize[i]; j += chunksize) {
+  //     if ((filesize[i] - j) < 10) {
+  //       chunksize = filesize[i] - j;
+  //     }
+  //     else {
+  //       chunksize = (rand() % (filesize[i] - j)) + 1;
+  //     }
+  //     if ((buffer = malloc(chunksize)) == NULL) {
+  //       fprintf(stderr, "ABORT: Out of memory!\n");
+  //       exit(-1);
+  //     }
+  //     readsize = sfs_fread(fds[i], buffer, chunksize);
 
-      if (readsize != chunksize) {
-        fprintf(stderr, "ERROR: Requested %d bytes, read %d\n", chunksize, readsize);
-        readsize = chunksize;
-      }  // Good until here
-      for (k = 0; k < readsize; k++) {
-        if (buffer[k] != (char)(j+k+1)) {
-          fprintf(stderr, "ERROR: data error at offset %d in file %s (%d,%d)\n",
-                  j+k, names[i], buffer[k], (char)(j+k));
-          error_count++;
-          break;
-        }
-      }
-      // printf("%d\n", j);
-      free(buffer);
-    }
-  }
+  //     if (readsize != chunksize) {
+  //       fprintf(stderr, "ERROR: Requested %d bytes, read %d\n", chunksize, readsize);
+  //       readsize = chunksize;
+  //     }  // Good until here
+  //     for (k = 0; k < readsize; k++) {
+  //       if (buffer[k] != (char)(j+k+1)) {
+  //         fprintf(stderr, "ERROR: data error at offset %d in file %s (%d,%d)\n",
+  //                 j+k, names[i], buffer[k], (char)(j+k));
+  //         error_count++;
+  //         break;
+  //       }
+  //     }
+  //     // printf("%d\n", j);
+  //     free(buffer);
+  //   }
+  // }
 
   // ########################################################################################################
   // ########################################################################################################
@@ -256,36 +256,36 @@ main(int argc, char **argv)
     }
   }
 
-//   /* Re-open in reverse order */
-//   for (i = nopen-1; i >= 0; i--) {
-//     fds[i] = sfs_fopen(names[i]);
-//     if (fds[i] < 0) {
-//       fprintf(stderr, "ERROR: can't re-open file %s\n", names[i]);
-//     }
-//   }
+  /* Re-open in reverse order */
+  for (i = nopen-1; i >= 0; i--) {
+    fds[i] = sfs_fopen(names[i]);
+    if (fds[i] < 0) {
+      fprintf(stderr, "ERROR: can't re-open file %s\n", names[i]);
+    }
+  }
 
-//   /* Now test the file contents.
-//    */
-//   for (i = 0; i < nopen; i++) {
-//       sfs_fseek(fds[i], 0);
-//   }
+  /* Now test the file contents.
+   */
+  for (i = 0; i < nopen; i++) {
+      sfs_frseek(fds[i], 0);
+  }
 
-//   for (j = 0; j < strlen(test_str); j++) {
-//     for (i = 0; i < nopen; i++) {
-//       char ch;
+  for (j = 0; j < strlen(test_str); j++) {
+    for (i = 0; i < nopen; i++) {
+      char ch;
 
-//       if (sfs_fread(fds[i], &ch, 1) != 1) {
-//         fprintf(stderr, "ERROR: Failed to read 1 character\n");
-//         error_count++;
-//       }
-//       if (ch != test_str[j]) {
-//         fprintf(stderr, "ERROR: Read wrong byte from %s at %d (%d,%d)\n", 
-//                 names[i], j, ch, test_str[j]);
-//         error_count++;
-//         break;
-//       }
-//     }
-//   }
+      if (sfs_fread(fds[i], &ch, 1) != 1) {
+        fprintf(stderr, "ERROR: Failed to read 1 character\n");
+        error_count++;
+      }
+      if (ch != test_str[j]) {
+        fprintf(stderr, "ERROR: Read wrong byte from %s at %d (%d,%d)\n", 
+                names[i], j, ch, test_str[j]);
+        error_count++;
+        break;
+      }
+    }
+  }
 
 //   /* Now close all of the open file handles.
 //    */

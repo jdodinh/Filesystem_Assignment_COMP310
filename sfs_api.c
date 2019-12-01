@@ -384,7 +384,9 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
         memcpy(buf + i, buffer + i + rd, 1);
         bytes ++;
     }
+    fd.read_pointer = fd.read_pointer + length;
     // free(buffer);
+    fdescs.fds[fileID] = fd;
     return bytes;
 }
 
