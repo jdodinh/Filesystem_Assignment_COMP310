@@ -216,7 +216,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
     int w_ptr = fd.write_pointer;                        // getting the location of the write pointer
-    int w_ptr_blk = w_ptr/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
+    // int w_ptr_blk = w_ptr/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
     int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
     int num_blk = ((length - blk_rem)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
     int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1;
@@ -369,7 +369,7 @@ int sfs_fwseek(int fileID, int loc){    // seek (Write) to the location from beg
     return 0;
 }            
 int sfs_fread(int fileID,char *buf, int length){          // read characters from disk into buf
-    int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
+    // int fd_index = check_fd_table(&fdescs, fdescs.fds[fileID].iNode_number);      // Check the file in the open file descriptor table
     if (fdescs.fds[fileID].iNode_number < 0) {
         // printf("ERROR: The given file is not open\n");
         return -1;
@@ -413,10 +413,10 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
         read_len = i_node.size-rd;
     }
 
-    char ch;
+    // char ch;
     for (int i = 0; i < read_len; i++) {
         memcpy(buf + i, buffer + i + rd, 1);
-        ch = *(buf+i);
+        // ch = *(buf+i);
         // if (ch == '\0') {
         //     return bytes;
         // }
@@ -606,13 +606,13 @@ int get_block_set(bitmap * system_bitmap, int req_size) {
 
 
 int update_disk(SuperBlock * super, INodeTable * table, root_directory * root, bitmap * map) {
-    bool debug = false;
-    if (debug == true) {
-        SuperBlock sup = *super;
-        INodeTable tbl = *table;
-        root_directory rt = *root;
-        bitmap mp = *map;
-    }
+    // bool debug = false;
+    // if (debug == true) {
+    //     SuperBlock sup = *super;
+    //     INodeTable tbl = *table;
+    //     root_directory rt = *root;
+    //     bitmap mp = *map;
+    // }
     int strt = 0;
     int siz = write_blocks(strt, 1, super);
     strt = strt + siz;
@@ -622,7 +622,7 @@ int update_disk(SuperBlock * super, INodeTable * table, root_directory * root, b
     blocks = ((sizeof(root_directory)-1)/BLOCK_SIZE+1); 
     siz = write_blocks(strt, blocks, root);
     siz = write_blocks(NUM_BLOCKS-1, 1, map);
-    file_descriptor fd_table[NUM_BLOCKS];
+    // file_descriptor fd_table[NUM_BLOCKS];
     return 0;
 }
 
