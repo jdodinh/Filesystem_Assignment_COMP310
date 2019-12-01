@@ -365,7 +365,7 @@ main(int argc, char **argv)
    */
   for (i = 0; i < nopen; i++) {
     fds[i] = sfs_fopen(names[i]);
-    sfs_fseek(fds[i], 0);
+    sfs_frseek(fds[i], 0);
     if (fds[i] >= 0) {
       readsize = sfs_fread(fds[i], fixedbuf, sizeof(fixedbuf));
       if (readsize < strlen(test_str)) {
