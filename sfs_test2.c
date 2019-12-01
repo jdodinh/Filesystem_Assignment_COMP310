@@ -378,7 +378,7 @@ main(int argc, char **argv)
   printf("Directory listing\n");
   char *filename = (char *)malloc(MAXFILENAME);
   int max = 0;
-  while (sfsgetnextfilename(filename)) {
+  while (sfs_getnextfilename(filename)) {
 	  if (strcmp(filename, names[max]) != 0) {
 	  	printf("ERROR misnamed file %d: %s %s\n", max, filename, names[max]);
 		error_count++;
@@ -419,7 +419,7 @@ main(int argc, char **argv)
 	  sfs_remove(names[i]);
   }
 
-  if (sfsgetnextfilename(filename)) {
+  if (sfs_getnextfilename(filename)) {
 	  fprintf(stderr, "ERROR: should be empty dir\n");
 	  error_count++;
   }
