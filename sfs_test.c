@@ -386,35 +386,36 @@ main(int argc, char **argv)
   /* Now try opening the first file, and just write a huge bunch of junk.
    * This is just to try to fill up the disk, to see what happens.
    */
-  // fds[0] = sfs_fopen(names[0]);
-  // if (fds[0] >= 0) {
-  //   for (i = 0; i < 100000; i++) {
-  //     int x;
+  fds[0] = sfs_fopen(names[0]);
+  // printf("Num blocks available: %d\n", bitmap_check(&system_bitmap);
+  if (fds[0] >= 0) {
+    for (i = 0; i < 100000; i++) {
+      int x;
 
-  //     if ((i % 100) == 0) {
-  //       fprintf(stderr, "%d\r", i);
-  //     }
-  //     // if (i == 250) {
-  //     //   break;
-  //     // }
+      if ((i % 100) == 0) {
+        fprintf(stderr, "%d\r", i);
+      }
+      // if (i == 250) {
+      //   break;
+      // }
 
-  //     memset(fixedbuf, (char)i, sizeof(fixedbuf));
-  //     x = sfs_fwrite(fds[0], fixedbuf, sizeof(fixedbuf));
-  //     if (x != sizeof(fixedbuf)) {
-  //       /* Sooner or later, this write should fail. The only thing is that
-  //        * it should fail gracefully, without any catastrophic errors.
-  //        */
-  //       printf("Write failed after %d iterations.\n", i);
-  //       printf("If the emulated disk contains just over %d bytes, this is OK\n",
-  //              (i * (int)sizeof(fixedbuf)));
-  //       break;
-  //     }
-  //   }
-  //   sfs_fclose(fds[0]);
-  // }
-  // else {
-  //   fprintf(stderr, "ERROR: re-opening file %s\n", names[0]);
-  // }
+      memset(fixedbuf, (char)i, sizeof(fixedbuf));
+      x = sfs_fwrite(fds[0], fixedbuf, sizeof(fixedbuf));
+      if (x != sizeof(fixedbuf)) {
+        /* Sooner or later, this write should fail. The only thing is that
+         * it should fail gracefully, without any catastrophic errors.
+         */
+        printf("Write failed after %d iterations.\n", i);
+        printf("If the emulated disk contains just over %d bytes, this is OK\n",
+               (i * (int)sizeof(fixedbuf)));
+        break;
+      }
+    }
+    sfs_fclose(fds[0]);
+  }
+  else {
+    fprintf(stderr, "ERROR: re-opening file %s\n", names[0]);
+  }
 
   // /* Now, having filled up the disk, try one more time to read the
   //  * contents of the files we created.
