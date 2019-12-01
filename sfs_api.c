@@ -357,7 +357,7 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
     file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
 
-    if (fd.read_pointer + length > i_node.size) {
+    if (fd.read_pointer + length > i_node.num_blocks*BLOCK_SIZE) {
         printf("Reading will be impossible, reading buffer is not within the file range\n");
     }
     void * buffer = (void *) malloc(BLOCK_SIZE * i_node.num_blocks);
@@ -381,12 +381,28 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
 
     int bytes = 0;
     int rd = fd.read_pointer;
-    for (int i = 0; i < length; i++) {
+
+    int read_len;
+
+    // determining how many bytes we need to read
+    if (length <= i_node.size-rd) {
+        read_len = length;
+    }
+    else {
+        read_len = i_node.size-rd;
+    }
+
+    char ch;
+    for (int i = 0; i < read_len; i++) {
         memcpy(buf + i, buffer + i + rd, 1);
+        ch = *(buf+i);
+        // if (ch == '\0') {
+        //     return bytes;
+        // }
         bytes ++;
     }
     fd.read_pointer = fd.read_pointer + length;
-    // free(buffer);
+    free(buffer);
     fdescs.fds[fileID] = fd;
     return bytes;
 }

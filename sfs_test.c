@@ -165,36 +165,36 @@ main(int argc, char **argv)
   // #################################  THIS SECTION DOESN'T PASS THE TESTS  #################################
   // #########################################################################################################
 
-  // for (i = 0; i < 2; i++) {
-  //   for (j = 0; j < filesize[i]; j += chunksize) {
-  //     if ((filesize[i] - j) < 10) {
-  //       chunksize = filesize[i] - j;
-  //     }
-  //     else {
-  //       chunksize = (rand() % (filesize[i] - j)) + 1;
-  //     }
-  //     if ((buffer = malloc(chunksize)) == NULL) {
-  //       fprintf(stderr, "ABORT: Out of memory!\n");
-  //       exit(-1);
-  //     }
-  //     readsize = sfs_fread(fds[i], buffer, chunksize);
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < filesize[i]; j += chunksize) {
+      if ((filesize[i] - j) < 10) {
+        chunksize = filesize[i] - j;
+      }
+      else {
+        chunksize = (rand() % (filesize[i] - j)) + 1;
+      }
+      if ((buffer = malloc(chunksize)) == NULL) {
+        fprintf(stderr, "ABORT: Out of memory!\n");
+        exit(-1);
+      }
+      readsize = sfs_fread(fds[i], buffer, chunksize);
 
-  //     if (readsize != chunksize) {
-  //       fprintf(stderr, "ERROR: Requested %d bytes, read %d\n", chunksize, readsize);
-  //       readsize = chunksize;
-  //     }  // Good until here
-  //     for (k = 0; k < readsize; k++) {
-  //       if (buffer[k] != (char)(j+k+1)) {
-  //         fprintf(stderr, "ERROR: data error at offset %d in file %s (%d,%d)\n",
-  //                 j+k, names[i], buffer[k], (char)(j+k));
-  //         error_count++;
-  //         break;
-  //       }
-  //     }
-  //     // printf("%d\n", j);
-  //     free(buffer);
-  //   }
-  // }
+      if (readsize != chunksize) {
+        fprintf(stderr, "ERROR: Requested %d bytes, read %d\n", chunksize, readsize);
+        readsize = chunksize;
+      }  // Good until here
+      for (k = 0; k < readsize; k++) {
+        if (buffer[k] != (char)(j+k)) {
+          fprintf(stderr, "ERROR: data error at offset %d in file %s (%d,%d)\n",
+                  j+k, names[i], buffer[k], (char)(j+k));
+          error_count++;
+          break;
+        }
+      }
+      // printf("%d\n", j);
+      free(buffer);
+    }
+  }
 
   // ########################################################################################################
   // ########################################################################################################
@@ -300,32 +300,32 @@ main(int argc, char **argv)
    */
   mksfs(0);
 
-//   for (i = 0; i < nopen; i++) {
-//     fds[i] = sfs_fopen(names[i]);
-//     sfs_fseek(fds[i], 0);
-//     if (fds[i] >= 0) {
-//       readsize = sfs_fread(fds[i], fixedbuf, sizeof(fixedbuf));
-//       if (readsize != strlen(test_str)) {
-//         fprintf(stderr, "ERROR: Read wrong number of bytes\n");
-//         error_count++;
-//       }
+  for (i = 0; i < nopen; i++) {
+    fds[i] = sfs_fopen(names[i]);
+    sfs_frseek(fds[i], 0);
+    if (fds[i] >= 0) {
+      readsize = sfs_fread(fds[i], fixedbuf, sizeof(fixedbuf));
+      if (readsize != strlen(test_str)) {
+        fprintf(stderr, "ERROR: Read wrong number of bytes:");
+        error_count++;
+      }
 
-//       for (j = 0; j < strlen(test_str); j++) {
-//         if (test_str[j] != fixedbuf[j]) {
-//           fprintf(stderr, "ERROR: Wrong byte in %s at %d (%d,%d)\n", 
-//                   names[i], j, fixedbuf[j], test_str[j]);
-//           printf("%d\n", fixedbuf[1]);
-//           error_count++;
-//           break;
-//         }
-//       }
+      for (j = 0; j < strlen(test_str); j++) {
+        if (test_str[j] != fixedbuf[j]) {
+          fprintf(stderr, "ERROR: Wrong byte in %s at %d (%d,%d)\n", 
+                  names[i], j, fixedbuf[j], test_str[j]);
+          printf("%d\n", fixedbuf[1]);
+          error_count++;
+          break;
+        }
+      }
 
-//       if (sfs_fclose(fds[i]) != 0) {
-//         fprintf(stderr, "ERROR: close of handle %d failed\n", fds[i]);
-//         error_count++;
-//       }
-//     }
-//   }
+      if (sfs_fclose(fds[i]) != 0) {
+        fprintf(stderr, "ERROR: close of handle %d failed\n", fds[i]);
+        error_count++;
+      }
+    }
+  }
 
 //   printf("Trying to fill up the disk with repeated writes to %s.\n", names[0]);
 //   printf("(This may take a while).\n");
