@@ -222,8 +222,9 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1;
     int blk_number = i_node.num_blocks;
     indirect ind;
-
-    if (bitmap_check(&system_bitmap)<num_extra_blocks) {
+    int remaining_blocks = bitmap_check(&system_bitmap);
+    printf(remaining_blocks);
+    if (remaining_blocks<num_extra_blocks) {
         return -2;
     }
 
@@ -326,7 +327,6 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     free(write_buf);
     update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
     return bytes;
-
 }
 
 
