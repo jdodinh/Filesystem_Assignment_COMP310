@@ -172,19 +172,25 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
         }
         // DEALLOCATE ALL THE BLOCKS
         INode node = system_inodes.System_INodes[inode];
-        for (int i = 0; i< 12; i++) {
-            system_bitmap.map[node.pointers[i]] = false;
-            write_blocks(node.pointers[i], 1, buffer);      // zeroing out the memory
-        }
         if (node.indirect >= 0) {
             indirect ind;
             read_blocks(node.indirect, 1, &ind);
+            for (int i = 0; i< 12; i++) {
+                system_bitmap.map[node.pointers[i]] = false;
+                write_blocks(node.pointers[i], 1, buffer);      // zeroing out the memory
+            }
             for (int i = 0; i<node.size-12; i++) {
                 system_bitmap.map[ind.pointers[i]] = false;
                 write_blocks(ind.pointers[i], 1, buffer);
             }
             system_bitmap.map[node.indirect] = false;
             write_blocks(node.indirect, 1, buffer);
+        }
+        else {
+            for (int i = 0; i< node.size; i++) {
+                system_bitmap.map[node.pointers[i]] = false;
+                write_blocks(node.pointers[i], 1, buffer);      // zeroing out the memory
+            }
         }
         reset_inode(&system_inodes.System_INodes[inode]);
         update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
