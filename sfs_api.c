@@ -216,9 +216,9 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
     int w_ptr = fd.write_pointer;                        // getting the location of the write pointer
-    // int w_ptr_blk = w_ptr/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
+    int w_ptr_blk = (w_ptr+1)/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
     int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
-    int num_blk = ((length - blk_rem)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
+    int buf_length = ((length - blk_rem - 1)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
     int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1;
     int blk_number = i_node.num_blocks;
     indirect ind;
@@ -280,42 +280,97 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
             }
         }
     }
-    num_blk = i_node.num_blocks;
-    void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
+    int num_blk = i_node.num_blocks;
+    // void * write_buf = (void *) malloc(num_blk*BLOCK_SIZE); // allocate a buffer of necessary length
+    void * write_buf = (void *) malloc(BLOCK_SIZE*buf_length);
     int bytes = 0;
-    if (num_blk > 12) {
-        for (int i = 0; i < 12; i++) {
-            read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+    int buf_ptr = (w_ptr+1)%BLOCK_SIZE;
+    // Getting the indices of the blocks into an array
+    int blocks[buf_length];
+    if (w_ptr_blk + buf_length > 12) {
+        if (w_ptr_blk < 12) {
+            for (int j = 0; j<12-w_ptr_blk; j++) {
+                blocks[j] = i_node.pointers[w_ptr_blk+j];
+            }
+            for (int j = 12-w_ptr_blk; j<buf_length; j++) {
+                blocks[j] = ind.pointers[j-12+w_ptr_blk];
+            }
         }
-        for (int i = 0; i < num_blk - 12; i++) {
-            read_blocks(ind.pointers[i], 1, (BLOCK_SIZE * (i+12))+ write_buf);
+        else {
+            for (int j = 0; j<buf_length; j++) {
+                blocks[j] = ind.pointers[w_ptr_blk - 12 + j];
+            }
         }
     }
     else {
-        for (int i = 0; i < num_blk; i++) {
-            read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+        for (int j = 0; j<buf_length; j++) {
+            blocks[j] = i_node.pointers[j + w_ptr_blk];
         }
     }
 
-    for (int j = 0; j < length; j++) {
-        memcpy(w_ptr + write_buf + j, buf+j, 1);
+    for (int i = 0; i<buf_length; i++) {
+        read_blocks(blocks[i], 1, write_buf+(i*BLOCK_SIZE));
+    }
+    for (int j = 0; j<length; j++) {
+        memcpy(write_buf + j + buf_ptr, buf+j, 1);
         bytes++;
     }
 
 
-    if (num_blk > 12) { 
-        for (int i = 0; i < 12; i++) {
-            write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
-        }
-        for (int i = 0; i < num_blk - 12; i++) {
-            write_blocks(ind.pointers[i], 1, (BLOCK_SIZE * (i+12)) + write_buf);
-        }
-    }
-    else {
-        for (int i = 0; i < num_blk; i++) {
-            write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
-        }
-    }
+        // if (i == 0) {
+        //     for (int j = w_ptr%BLOCK_SIZE; j < BLOCK_SIZE; j++ ) {
+        //         memcpy(write_buf+j, buf + bytes, 1 );
+        //         bytes++;
+        //     }
+
+        // }
+        // else if (i == buf_length - 1) {
+        //     for (int j = 0; j < length - bytes; j++) {
+        //         memcpy(write_buf+j, buf + bytes, 1); 
+        //         bytes++;
+        //     }
+        // }
+        // else {
+        //     for (int j = 0; j<BLOCK_SIZE; j++) {
+        //         memcpy(write_buf+j, buf + bytes, 1); 
+        //         bytes++;
+        //     }
+        // }
+
+
+    // if (num_blk > 12) {
+    //     for (int i = 0; i < 12; i++) {
+    //         read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+    //     }
+    //     for (int i = 0; i < num_blk - 12; i++) {
+    //         read_blocks(ind.pointers[i], 1, (BLOCK_SIZE * (i+12))+ write_buf);
+    //     }
+    // }
+    // else {
+    //     for (int i = 0; i < num_blk; i++) {
+    //         read_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+    //     }
+    // }
+
+    // for (int j = 0; j < length; j++) {
+    //     memcpy(w_ptr + write_buf + j, buf+j, 1);
+    //     bytes++;
+    // }
+
+
+    // if (num_blk > 12) { 
+    //     for (int i = 0; i < 12; i++) {
+    //         write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+    //     }
+    //     for (int i = 0; i < num_blk - 12; i++) {
+    //         write_blocks(ind.pointers[i], 1, (BLOCK_SIZE * (i+12)) + write_buf);
+    //     }
+    // }
+    // else {
+    //     for (int i = 0; i < num_blk; i++) {
+    //         write_blocks(i_node.pointers[i], 1, (BLOCK_SIZE * i)+ write_buf); 
+    //     }
+    // }
 
     fd.write_pointer = w_ptr + length;
     fdescs.fds[fileID] = fd;
