@@ -217,11 +217,19 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
     int w_ptr = fd.write_pointer;                        // getting the location of the write pointer
     int w_ptr_blk = (w_ptr+1)/ BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
+    int blk_number = i_node.num_blocks;
     // int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
     // int buf_length = ((length - blk_rem - 1)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
-    int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1;
+    // int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1; // CORRECT
+    int num_extra_blocks;
+    if ((w_ptr + length) < (blk_number*BLOCK_SIZE)) {
+        num_extra_blocks = 0;
+    }
+    else {
+        num_extra_blocks =  (((w_ptr + length) - blk_number*BLOCK_SIZE-1)/BLOCK_SIZE)+1;
+    }
+    i_node.num_blocks = i_node.num_blocks + num_extra_blocks;
     int buf_length = num_extra_blocks;
-    int blk_number = i_node.num_blocks;
     indirect ind;
     int remaining_blocks = bitmap_check(&system_bitmap);
     // printf("%d\n", remaining_blocks);
