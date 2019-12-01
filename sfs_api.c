@@ -179,7 +179,7 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
         if (node.indirect >= 0) {
             indirect ind;
             read_blocks(node.indirect, 1, &ind);
-            for (int i = 0; i<IND_SIZ; i++) {
+            for (int i = 0; i<node.size-12; i++) {
                 system_bitmap.map[ind.pointers[i]] = false;
                 write_blocks(ind.pointers[i], 1, buffer);
             }
