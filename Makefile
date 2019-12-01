@@ -7,7 +7,7 @@ SOURCES= disk_emu.c sfs_api.c sfs_test.c sfs_api.h
 #SOURCES= disk_emu.c sfs_api.c sfs_test2.c sfs_api.h
 #SOURCES= disk_emu.c sfs_api.c fuse_wrappers.c sfs_api.h
 
-OBJECTS=$(SOURCES:.c=.o)
+OBJECTS=$(SOURCES:.c=.o)  # convert sources to disk_emu.o sfs_api.o sfs_test.o sfs_api.h
 EXECUTABLE=Jeremi_DoDinh_sfs
 
 all: $(SOURCES) $(HEADERS) $(EXECUTABLE)

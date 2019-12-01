@@ -12,7 +12,7 @@ double r;
 int BLOCK_SIZE, MAX_BLOCK, MAX_RETRY, lru;
 
 /*----------------------------------------------------------*/
-/*Close the disk file filled when you don't need it anymore. */
+/*Close the disk file filled when you don't need it anymore.*/
 /*----------------------------------------------------------*/
 int close_disk()
 {
