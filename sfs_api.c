@@ -476,7 +476,7 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
 }
 
 int sfs_getnextfilename(char *fname) {      // get the name of the next file in directory
-    if (strlen(fname<2)) {
+    if (strlen(fname)<2) {
         for (int i =0; i < NUM_BLOCKS; i++) {
             if (root_dir.entries[i].inode>=0) {
                 strcpy(fname, root_dir.entries[i].filename);
