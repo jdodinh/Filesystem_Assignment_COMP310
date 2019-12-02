@@ -782,6 +782,15 @@ int check_directory(root_directory * directory, char * filename) {
     return -1;
 }
 
+int check_empty_directory(root_directory * directory) {
+    for (int i = 0; i<NUM_BLOCKS; i++) {
+        if (directory->entries[i].inode >= 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 
 int check_directory_ind(root_directory * directory, char * filename) {
     for (int i = 0; i < NUM_BLOCKS; i++) {
