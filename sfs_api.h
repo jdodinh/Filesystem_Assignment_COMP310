@@ -104,6 +104,7 @@ int reset_filesystem();
 int update_disk(SuperBlock * super, INodeTable * table, root_directory * root, bitmap * map); 
 int next_free_inode(INodeTable * table);
 int check_directory(root_directory * directory, char * filename);
+int check_directory_ind(root_directory * directory, char * filename);
 int next_free_dentry(root_directory * root_dir);
 int init_inode(INode * node);
 int init_dentry(char * name, dir_entry * entry, int index);

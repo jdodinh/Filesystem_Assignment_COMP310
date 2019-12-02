@@ -167,6 +167,7 @@ int sfs_fclose(int fileID) {            // closes the given file
 
 int sfs_remove(char *file) {              // removes a file from the filesystem
     int inode = check_directory(&root_dir, file);  // checks if the file exists in the directory
+    int dir_index = check_directory_ind(&root_dir, file);
     char buffer[BLOCK_SIZE] = { 0 };
     if (inode >= 0) {   // If a file exists, we check if it is open
         int fd = check_fd_table(&fdescs, inode);
@@ -199,6 +200,7 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
             }
         }
         reset_inode(&system_inodes.System_INodes[inode]);
+        reset_dentry(&root_dir.entries[dir_index]);
         update_disk(&super, &system_inodes, &root_dir, &system_bitmap);
         return 0;
     }
@@ -746,6 +748,21 @@ int check_directory(root_directory * directory, char * filename) {
     return -1;
 }
 
+
+int check_directory_ind(root_directory * directory, char * filename) {
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        char * entry = directory->entries[i].filename;
+        if (strcmp(entry, filename)==0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int reset_dentry(dir_entry * entry) {
+    entry->inode = -1;
+    return 0;
+}
 
 int check_fd_table(fd_table * tbl, int inode) {
     for (int i = 0; i < NUM_BLOCKS; i++) {
