@@ -383,9 +383,6 @@ main(int argc, char **argv)
 	  	printf("ERROR misnamed file %d: %s %s\n", max, filename, names[max]);
 		error_count++;
 	  }
-    if (max == 90) {
-      printf("Hello world");
-    }
 	  max++;
   }
 
