@@ -513,33 +513,6 @@ int sfs_getnextfilename(char *fname) {      // get the name of the next file in 
         }
     }
     return -1;
-    // for (int i = 0; i<NUM_BLOCKS; i++) {
-    //     if (root_dir.entries[i].next == true) {
-    //         root_dir.entries[i].next = false;
-    //         strcpy(fname, root_dir.entries[i].filename);
-    //         for (int j = i; j<NUM_BLOCKS; j++) {
-    //             if (root_dir.entries[j].inode>=0) {
-    //                 root_dir.entries[j].next = true;
-    //                 return 1;
-    //             }
-    //         }
-    //         return 0;
-    //     }
-    // }
-    // for (int j = 0; j<NUM_BLOCKS; j++) {
-    //     if (root_dir.entries[j].inode>=0) {
-
-    //         strcpy(fname, root_dir.entries[j].filename);
-    //         for (int i = j+1; i<NUM_BLOCKS; i++) {
-    //             if (root_dir.entries[i].inode>=0) {
-    //                 root_dir.entries[i].next = true;
-    //                 return 1;
-    //             }
-    //         }
-    //         return 1;
-    //     }
-    // }
-    return -1;
 }               
 int sfs_getfilesize(const char* path) {            // get the size of the given file
     int i_node = check_directory(&root_dir, (char*) path);
