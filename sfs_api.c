@@ -487,7 +487,7 @@ int sfs_getnextfilename(char *fname) {      // get the name of the next file in 
     for (int i = 0; i<NUM_BLOCKS; i++) {
         if (strcmp(fname, root_dir.entries[i].filename)==0) {
             for (int j = i+1; j<NUM_BLOCKS; j++) {
-                if (root_dir.entries[i].inode>=0) {
+                if (root_dir.entries[j].inode>=0) {
                     strcpy(fname, root_dir.entries[j].filename);
                     int next = -1;
                     for (int k = j+1; k<NUM_BLOCKS; k++) {
