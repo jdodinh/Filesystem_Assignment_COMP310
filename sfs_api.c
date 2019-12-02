@@ -171,8 +171,9 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
     if (inode >= 0) {   // If a file exists, we check if it is open
         int fd = check_fd_table(&fdescs, inode);
         if (fd >= 0) {
-            // File already open
-            sfs_fclose(fd);
+            // File already open, can't be removed
+            // sfs_fclose(fd);
+            return -1;
         }
         // DEALLOCATE ALL THE BLOCKS
         INode node = system_inodes.System_INodes[inode];
