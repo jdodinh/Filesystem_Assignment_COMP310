@@ -476,6 +476,10 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
 }
 
 int sfs_getnextfilename(char *fname) {      // get the name of the next file in directory
+    int is_empty = check_empty_directory(&root_dir);
+    if (is_empty < 1) {
+        return 0;
+    }
     if (strlen(fname)<2) {
         for (int i =0; i < NUM_BLOCKS; i++) {
             if (root_dir.entries[i].inode>=0) {
@@ -785,10 +789,10 @@ int check_directory(root_directory * directory, char * filename) {
 int check_empty_directory(root_directory * directory) {
     for (int i = 0; i<NUM_BLOCKS; i++) {
         if (directory->entries[i].inode >= 0) {
-            return 1;
+            return 0;
         }
     }
-    return 0;
+    return -1;
 }
 
 
