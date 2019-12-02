@@ -673,7 +673,7 @@ int init_inode(INode * node) {
 int init_dentry(char * name, dir_entry * entry, int index) {
     strcpy(entry->filename, name);
     entry->inode = index;
-    entry->next = false;
+    // entry->next = false;
     return 0;
 }
 
