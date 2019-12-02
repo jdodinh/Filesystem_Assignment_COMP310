@@ -207,7 +207,7 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
 int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters into disk
    
     if (fdescs.fds[fileID].iNode_number < 0) {
-        printf("ERROR: The given file is not open\n");
+        // printf("ERROR: The given file is not open\n");
         return -1;
     }
     file_descriptor fd = fdescs.fds[fileID];               // getting the file descriptor of the file
@@ -423,7 +423,7 @@ int sfs_fread(int fileID,char *buf, int length){          // read characters fro
     INode i_node = system_inodes.System_INodes[fd.iNode_number];  // getting the inode of the file
 
     if (fd.read_pointer + length > i_node.num_blocks*BLOCK_SIZE) {
-        printf("Reading will be impossible, reading buffer is not within the file range\n");
+        // printf("Reading will be impossible, reading buffer is not within the file range\n");
     }
     void * buffer = (void *) malloc(BLOCK_SIZE * i_node.num_blocks);
 
