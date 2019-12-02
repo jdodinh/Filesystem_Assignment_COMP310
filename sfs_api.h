@@ -114,4 +114,5 @@ int fd_tbl_init (fd_table * tbl);
 int check_fd_table(fd_table * tbl, int inode);
 int mark_blocks(bitmap * system_bitmap, int new_block, int num_extra_blocks);
 int reset_inode(INode * node);
+int reset_dentry(dir_entry * entry);
 int bitmap_check (bitmap * map);
