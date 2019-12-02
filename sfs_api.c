@@ -193,7 +193,7 @@ int sfs_remove(char *file) {              // removes a file from the filesystem
             write_blocks(node.indirect, 1, buffer);
         }
         else {
-            for (int i = 0; i< node.size; i++) {
+            for (int i = 0; i< node.num_blocks; i++) {
                 system_bitmap.map[node.pointers[i]] = false;
                 write_blocks(node.pointers[i], 1, buffer);      // zeroing out the memory
             }
