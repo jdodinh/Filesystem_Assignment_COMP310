@@ -218,9 +218,6 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int w_ptr = fd.write_pointer;                        // getting the location of the write pointer
     int w_ptr_blk = w_ptr/BLOCK_SIZE;             // Getting the index of the block in which the write pointer currently is
     int blk_number = i_node.num_blocks;
-    // int blk_rem = BLOCK_SIZE - (w_ptr % BLOCK_SIZE);      // number of bytes left to write in the current block
-    // int buf_length = ((length - blk_rem - 1)/BLOCK_SIZE) + 2;      // see how many blocks we need read before 
-    // int num_extra_blocks = ((length - i_node.size + w_ptr-1)/BLOCK_SIZE) + 1; // CORRECT
     int num_extra_blocks;
     if ((w_ptr + length) <= (blk_number*BLOCK_SIZE)) {
         num_extra_blocks = 0;
@@ -531,6 +528,7 @@ int sfs_getfilesize(const char* path) {            // get the size of the given 
 // #############################################################################################################
 
 int bitmap_check (bitmap * map) {
+    // Check returns the number of free blocks in the bitmaps
     int count = 0;
     for (int i = 0; i<NUM_BLOCKS; i++) {
         if (map->map[i] == false) {
@@ -545,6 +543,7 @@ int bitmap_check (bitmap * map) {
     }
 }
 int super_init(SuperBlock * super) {
+    // Initializes the super block
     super->block_size = BLOCK_SIZE;
     super->system_size = NUM_BLOCKS;
     super->magic = 0xACBD0005;
@@ -555,11 +554,9 @@ int super_init(SuperBlock * super) {
 }
 
 int root_INode_init(INode * root, int start, int size) {
+    // Initializes the root directory inode
     root->mode = 760;
-    // root->pointers[0] = 0;
     root->num_links = 1;
-    // root->user_id = getuid();
-    // root->group_id = getgid();
     root->valid = true;
     root->size = sizeof(root_directory);
     root->num_blocks=((root->size-1)/BLOCK_SIZE) + 1;
@@ -588,6 +585,7 @@ int root_INode_init(INode * root, int start, int size) {
 }
 
 int root_dir_init(root_directory * dir) {
+    // Initializes the empty root directory structure
     for (int i = 0; i < NUM_BLOCKS; i++) {
         dir->entries[i].inode = -1;
     }
@@ -595,6 +593,7 @@ int root_dir_init(root_directory * dir) {
 }
 
 int fd_tbl_init (fd_table * tbl) {
+    // Initializes a free file descriptor table
     for (int i = 0; i< NUM_BLOCKS; i++) {
         tbl->fds[i].iNode_number = -1;
         tbl->fds[i].read_pointer = -1;
@@ -604,6 +603,7 @@ int fd_tbl_init (fd_table * tbl) {
 }
 
 int inode_table_init(INodeTable * tbl) {
+    //Initialized the inode table
     for (int i = 0; i < NUM_BLOCKS; i++) {
         tbl->System_INodes[i].indirect = -1;
         tbl->System_INodes[i].mode = 0;
@@ -621,6 +621,7 @@ int inode_table_init(INodeTable * tbl) {
 
 
 int reset_inode(INode * node) {
+    // Resets an inode
     node->indirect = -1;
     node->mode = -1;
     node->size = 0;
@@ -633,8 +634,8 @@ int reset_inode(INode * node) {
     return 0;
 }
 
-
 int init_inode(INode * node) {
+    // Initialized empty inode
     node->mode = 760;
     node->num_links = 0;
     node->num_blocks = 0;
@@ -648,6 +649,7 @@ int init_inode(INode * node) {
 }
 
 int init_dentry(char * name, dir_entry * entry, int index) {
+    // Initializes a new directory entry, based on the name, and inode
     strcpy(entry->filename, name);
     entry->inode = index;
     // entry->next = false;
@@ -655,14 +657,15 @@ int init_dentry(char * name, dir_entry * entry, int index) {
 }
 
 int init_fd(file_descriptor * fd, int inode, int read_ptr, int write_ptr) {
+    // Initializes a new file descriptor 
     fd->iNode_number = inode;
     fd->read_pointer = read_ptr;
     fd -> write_pointer = write_ptr;
     return 0;
 }
 
-
 int init_bitmap(bitmap * map, int start) {
+    // Initialized the bitmap 
     for (int i = start; i<NUM_BLOCKS-1; i++) {
         map->map[i] = false;
     }
@@ -673,12 +676,8 @@ int init_bitmap(bitmap * map, int start) {
     return 0;
 }
 
-int store_block_pointers() {
-    
-    return 0;
-}
-
 int get_block_set(bitmap * system_bitmap, int req_size) {
+    // Returns index in the bitmap of the first block out of a number of free blocks defined by req_size
     int index;
     int len = 0;
     for (int i = 0; i<NUM_BLOCKS; i++) {
@@ -692,16 +691,8 @@ int get_block_set(bitmap * system_bitmap, int req_size) {
     return -1;
 }
 
-
-
 int update_disk(SuperBlock * super, INodeTable * table, root_directory * root, bitmap * map) {
-    // bool debug = false;
-    // if (debug == true) {
-    //     SuperBlock sup = *super;
-    //     INodeTable tbl = *table;
-    //     root_directory rt = *root;
-    //     bitmap mp = *map;
-    // }
+    // Updates the disk with the updated inode table, and root directory, as well as bitmap. 
     int strt = 0;
     int siz = write_blocks(strt, 1, super);
     strt = strt + siz;
@@ -715,13 +706,8 @@ int update_disk(SuperBlock * super, INodeTable * table, root_directory * root, b
     return 0;
 }
 
-
-int reset_filesystem() {
-    return 0;
-}
-
-
 int next_free_inode(INodeTable * table) {
+    //Returns the index of a free entry in the INode table
     for (int i = 0; i < NUM_BLOCKS; i++) {
         if (table->System_INodes[i].valid == false) {
             return i;
@@ -731,6 +717,7 @@ int next_free_inode(INodeTable * table) {
 }
 
 int next_free_dentry(root_directory * root_dir) {
+    //Returns the index of a free entry in the root directory
     for (int i = 0; i<NUM_BLOCKS; i++) {
         if (root_dir->entries[i].inode == -1) {
             return i;
@@ -739,8 +726,8 @@ int next_free_dentry(root_directory * root_dir) {
     return -1;
 }
 
-
 int next_free_fd(fd_table * table) {
+    //Returns the index of a free entry in the file descriptor table
     for (int i = 0; i<NUM_BLOCKS; i++) {
         if (table->fds[i].iNode_number == -1) {
             return i;
@@ -750,6 +737,7 @@ int next_free_fd(fd_table * table) {
 }
 
 int check_directory(root_directory * directory, char * filename) {
+    // Returns the INode of the file called "filename", and -1 if the file doesn't exist
     for (int i = 0; i < NUM_BLOCKS; i++) {
         char * entry = directory->entries[i].filename;
         if (strcmp(entry, filename)==0) {
@@ -760,6 +748,7 @@ int check_directory(root_directory * directory, char * filename) {
 }
 
 int check_empty_directory(root_directory * directory) {
+    // Check if the root directory is empty
     for (int i = 0; i<NUM_BLOCKS; i++) {
         if (directory->entries[i].inode >= 0) {
             return 0;
@@ -768,8 +757,8 @@ int check_empty_directory(root_directory * directory) {
     return -1;
 }
 
-
 int check_directory_ind(root_directory * directory, char * filename) {
+    // returns the index of "filename" in the root directory "directory"
     for (int i = 0; i < NUM_BLOCKS; i++) {
         char * entry = directory->entries[i].filename;
         if (strcmp(entry, filename)==0) {
@@ -780,11 +769,13 @@ int check_directory_ind(root_directory * directory, char * filename) {
 }
 
 int reset_dentry(dir_entry * entry) {
+    // resets a root directory entry. Setting the inode to -1 marks it as available
     entry->inode = -1;
     return 0;
 }
 
 int check_fd_table(fd_table * tbl, int inode) {
+    // returns the index on the file descriptor table of the file with inode numer "inode"
     for (int i = 0; i < NUM_BLOCKS; i++) {
         if (tbl->fds[i].iNode_number == inode) {
             return i;
@@ -794,6 +785,7 @@ int check_fd_table(fd_table * tbl, int inode) {
 }
 
 int mark_blocks(bitmap * map, int new_blk, int num_extra) {
+    // marks blocks in the bitmap as taken. starting at block indexed at "new_blk" and marking the next "num_extra" blocks
     for (int i=0; i < num_extra; i++) {
         map->map[i+new_blk] = true;
     }
