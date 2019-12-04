@@ -223,6 +223,7 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
         num_extra_blocks = 0;
     }
     if (w_ptr + length > MAXFILESIZE) {
+        printf("MAXIMUM FILE SIZE EXCEEDED\n");
         return -1;
     }
     else {
@@ -233,9 +234,6 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     buf_length = (buf_length + BLOCK_SIZE -1)/ BLOCK_SIZE;
     indirect ind;
     int remaining_blocks = bitmap_check(&system_bitmap);
-    if (remaining_blocks <= 525) {
-        printf("HelloWorld");
-    }
 
     if (num_extra_blocks >0 ) {  // Allocate more blocks to the file
     // Check if we need to write extra blocks 
