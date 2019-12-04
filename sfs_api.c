@@ -233,7 +233,6 @@ int sfs_fwrite(int fileID,char *buf, int length) {   // write buf characters int
     int buf_length = w_ptr + length - (w_ptr_blk*BLOCK_SIZE);
     buf_length = (buf_length + BLOCK_SIZE -1)/ BLOCK_SIZE;
     indirect ind;
-    int remaining_blocks = bitmap_check(&system_bitmap);
 
     if (num_extra_blocks >0 ) {  // Allocate more blocks to the file
     // Check if we need to write extra blocks 
